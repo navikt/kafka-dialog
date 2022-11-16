@@ -72,8 +72,8 @@ jobs:
   deploy-dev:
     name: Deploy to NAIS dev gcp
     needs: build
-     runs-on: ubuntu-latest
-     steps:
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
         env:
