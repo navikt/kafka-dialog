@@ -9,9 +9,6 @@ on:
       DEPLOY_CLUSTER:
         required: true
         type: string
-    secrets:
-      NAIS_DEPLOY_APIKEY:
-        required: true
 env:
   IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
