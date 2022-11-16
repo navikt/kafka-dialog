@@ -3,8 +3,9 @@ name: Configure and run workflow
 on: [push, pull_request]
 
 jobs:
-  call-main-workflow:
+  deploy:
     uses: ./.github/workflows/workflow.yml
+    secrets: inherit
     with:
       DEPLOY_APP: sf-arbeidsgiver-kontaktskjema
       DEPLOY_CLUSTER: dev-gcp

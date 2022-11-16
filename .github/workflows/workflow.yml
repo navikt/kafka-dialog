@@ -9,6 +9,9 @@ on:
       DEPLOY_CLUSTER:
         required: true
         type: string
+    secrets:
+      NAIS_DEPLOY_APIKEY:
+        required: true
 env:
   IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
@@ -88,7 +91,7 @@ jobs:
           RESOURCE: .nais/dev.yaml
           VAR: image=${{ env.IMAGE}},DEPLOY_APP=${{ inputs.DEPLOY_APP}},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER}}
   deploy-prod:
-    name: Deploy to NAIS dev gcp
+    name: Deploy to NAIS prod gcp
     needs: build
     if: ${{ inputs.DEPLOY_CLUSTER }} == 'prod-gcp'
     runs-on: ubuntu-latest
