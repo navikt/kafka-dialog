@@ -80,7 +80,7 @@ jobs:
   deploy-dev:
     name: Deploy to NAIS dev gcp
     needs: build
-    if: ${{ inputs.DEPLOY_CLUSTER }} == 'dev-gcp'
+    if: inputs.DEPLOY_CLUSTER == 'dev-gcp'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -93,14 +93,14 @@ jobs:
   deploy-prod:
     name: Deploy to NAIS prod gcp
     needs: build
-    if: ${{ inputs.DEPLOY_CLUSTER }} == 'prod-gcp'
+    if: inputs.DEPLOY_CLUSTER == 'prod-gcp'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: dev-gcp
+          CLUSTER: prod-gcp
           RESOURCE: .nais/prod.yaml
           VAR: image=${{ env.IMAGE}},DEPLOY_APP=${{ inputs.DEPLOY_APP}},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER}}
 #  deploy-prod:

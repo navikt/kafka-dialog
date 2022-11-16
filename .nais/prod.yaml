@@ -38,16 +38,16 @@ spec:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-stilling
+    - secret: sf-dialogmote
   filesFrom:
-    - secret: sf-stilling
+    - secret: sf-dialogmote
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: KAFKA_CLIENTID
-      value: sf-stilling
+      value: kafka-dialog
     - name: KAFKA_SECURITY
       value: 'TRUE'
     - name: KAFKA_TOPIC

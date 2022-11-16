@@ -32,13 +32,23 @@ spec:
     requests:
       cpu: 100m
       memory: 512Mi
+  accessPolicy:
+    outbound:
+      external:
+        - host: test.salesforce.com
+        - host: navdialog--preprod.my.salesforce.com
+        - host: navdialog--uat.my.salesforce.com
+  envFrom:
+    - secret: sf-dialogmote
+  filesFrom:
+    - secret: sf-dialogmote
   kafka:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: KAFKA_CLIENTID
-      value: sf-stilling
+      value: kafka-dialog
     - name: KAFKA_SECURITY
       value: 'TRUE'
     - name: KAFKA_TOPIC
