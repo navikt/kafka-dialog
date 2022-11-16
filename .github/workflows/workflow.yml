@@ -5,8 +5,10 @@ on:
     inputs:
       DEPLOY_APP:
         required: true
+        type: string
       DEPLOY_CLUSTER:
         required: true
+        type: string
 env:
   IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
