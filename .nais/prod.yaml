@@ -44,6 +44,8 @@ spec:
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
+    - name: DEPLOY_APP
+      value: {{ DEPLOY_APP }}
     - name: KAFKA_CLIENTID
       value: sf-stilling
     - name: KAFKA_SECURITY

@@ -2,6 +2,7 @@ package no.nav.kafka.dialog
 
 import mu.KotlinLogging
 
+const val env_DEPLOY_APP = "DEPLOY_APP"
 const val env_MS_BETWEEN_WORK = "MS_BETWEEN_WORK"
 
 val application = KafkaPosterApplication()
@@ -25,7 +26,8 @@ class KafkaPosterApplication() {
         when {
             stop -> Unit.also { log.info { "Stopped" } }
             !stop -> {
-                log.info("To perform work here...")
+                val deployApp = env(env_DEPLOY_APP)
+                log.info("App $deployApp - to perform work here...")
                 // poster.runWorkSession()
                 conditionalWait(bootstrapWaitTime)
                 loop()
