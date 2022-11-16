@@ -1,4 +1,4 @@
-package no.nav.sf.stilling
+package no.nav.kafka.dialog
 
 import kotlinx.coroutines.NonCancellable.isActive
 import mu.KotlinLogging
