@@ -32,11 +32,6 @@ spec:
     requests:
       cpu: 100m
       memory: 512Mi
-  vault:
-    enabled: true
-    paths:
-      - mountPath: /var/run/secrets/nais.io/vault
-        kvPath: /kv/preprod/fss/sf-stilling/team-dialog
   kafka:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
