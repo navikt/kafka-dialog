@@ -3,7 +3,7 @@ name: Configure and run workflow
 on: [push, pull_request]
 
 jobs:
-  deploy:
+  build-deploy:
     uses: ./.github/workflows/workflow.yml
     secrets: inherit
     with:
