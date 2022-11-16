@@ -72,7 +72,7 @@ jobs:
   deploy-dev:
     name: Deploy to NAIS dev gcp
     needs: build
-    if: ${{ env.DEPLOY_CLUSTER }} == 'dev-gcp'
+    if: ${{ DEPLOY_CLUSTER }} == 'dev-gcp'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -85,7 +85,7 @@ jobs:
   deploy-prod:
     name: Deploy to NAIS dev gcp
     needs: build
-    if: ${{ env.DEPLOY_CLUSTER }} == 'prod-gcp'
+    if: ${{ DEPLOY_CLUSTER }} == 'prod-gcp'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
