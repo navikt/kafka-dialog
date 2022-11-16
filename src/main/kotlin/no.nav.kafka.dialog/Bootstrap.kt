@@ -1,12 +1,6 @@
 package no.nav.kafka.dialog
 
-import kotlinx.coroutines.NonCancellable.isActive
 import mu.KotlinLogging
-import no.nav.kafka.dialog.PrestopHook
-import no.nav.kafka.dialog.ShutdownHook
-import no.nav.kafka.dialog.conditionalWait
-import no.nav.kafka.dialog.enableNAISAPI
-import no.nav.kafka.dialog.envAsLong
 
 const val env_MS_BETWEEN_WORK = "MS_BETWEEN_WORK"
 
