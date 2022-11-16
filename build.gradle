@@ -1,0 +1,134 @@
+buildscript {
+    ext.kotlin_version = '1.3.72'
+    ext.kotlin_coroutine = '1.3.5'
+    ext.kotlin_serialization = '0.20.0'
+    ext.http4k_version = '3.244.0'
+    ext.kafka_version = '2.3.1'
+    ext.confluent_version = '5.4.0'
+    ext.embedded_kafka = '2.4.0'
+    ext.kotlin_loggin_version = '1.7.9'
+    ext.logback_version = '1.2.3'
+    ext.log4j_version = '1.7.25'
+    ext.logstash_encoder_version = '6.3'
+    ext.prometheus_version = '0.8.1'
+}
+
+plugins {
+    id "com.github.davidmc24.gradle.plugin.avro" version '1.0.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.61'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.3.61'
+
+    id 'application'
+    id 'idea'
+
+    id 'org.jmailen.kotlinter' version '2.2.0'
+    id 'com.github.ben-manes.versions' version '0.27.0'
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+}
+
+group 'no.nav.sf.stilling'
+version '0.1'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'no.nav.kafka.dialog.BootstrapKt'
+    }
+}
+
+shadowJar {
+    archiveBaseName = 'app'
+    archiveClassifier = ''
+}
+
+application {
+    mainClassName = 'no.nav.kafka.dialog.BootstrapKt'
+}
+
+tasks.withType(JavaExec) {
+    jvmArgs = ['-Xms1024m', '-Xmx2048m']
+}
+
+run {
+    environment "KAFKA_BROKERS", "localhost:9092"
+    environment "KAFKA_CLIENTID", "sf-stilling"
+    environment "KAFKA_SECURITY", "FALSE"
+    environment "KAFKA_TOPIC", "aapen-oppgave-endret-v1-dev-syntetisk"
+    environment "SF_INSTTYPE", "SCRATCH"
+    environment "MS_BETWEEN_WORK", "120000"
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url "http://packages.confluent.io/maven"
+    }
+
+    ["maven-release"].each { repo ->
+        String token = System.getenv("GITHUB_TOKEN") ?: project.findProperty("githubPassword")
+        if (!token) throw new NullPointerException("Missing token, you have to set GITHUB_TOKEN or githubPassword")
+        maven {
+            url = uri("https://maven.pkg.github.com/navikt/$repo")
+            credentials {
+                username = 'x-access-token'
+                password = token
+            }
+        }
+    }
+}
+
+configurations {
+    all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation 'org.junit.jupiter:junit-jupiter:5.7.0'
+
+
+    // compile "org.apache.avro:avro:1.10.1"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.1"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutine"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$kotlin_serialization"
+
+    implementation "org.http4k:http4k-core:$http4k_version"
+    implementation "org.http4k:http4k-server-netty:$http4k_version"
+    implementation "org.http4k:http4k-client-apache:$http4k_version"
+    implementation "org.http4k:http4k-format-jackson:$http4k_version"
+
+    implementation "org.apache.kafka:kafka-clients:$kafka_version"
+    implementation "io.confluent:kafka-avro-serializer:$confluent_version"
+
+    implementation "io.github.microutils:kotlin-logging:$kotlin_loggin_version"
+    implementation "ch.qos.logback:logback-classic:$logback_version"
+    implementation "net.logstash.logback:logstash-logback-encoder:$logstash_encoder_version"
+
+    implementation "io.prometheus:simpleclient_common:$prometheus_version"
+    implementation "io.prometheus:simpleclient_hotspot:$prometheus_version"
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    test.kotlin.srcDirs += 'src/test/kotlin'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+    dependsOn("generateAvroJava")
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.jvmArgs("-noverify", "-XX:TieredStopAtLevel=1", "-Dcom.sun.management.jmxremote")
