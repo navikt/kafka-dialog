@@ -119,7 +119,7 @@ class KafkaPosterApplication<K, V>(val settings: List<KafkaToSFPoster.Settings> 
         when {
             stop -> Unit.also { log.info { "Stopped" } }
             !stop -> {
-                log.info { "Poster settings from env : $parsedsettings" }
+                log.info { "Poster settings from env : $settings" }
                 poster.runWorkSession()
                 conditionalWait(bootstrapWaitTime)
                 loop()
