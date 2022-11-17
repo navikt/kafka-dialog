@@ -11,6 +11,7 @@ buildscript {
     ext.log4j_version = '1.7.25'
     ext.logstash_encoder_version = '6.3'
     ext.prometheus_version = '0.8.1'
+    ext.caffeine_version = '2.8.2'
 }
 
 plugins {
@@ -106,6 +107,8 @@ dependencies {
 
     implementation "io.prometheus:simpleclient_common:$prometheus_version"
     implementation "io.prometheus:simpleclient_hotspot:$prometheus_version"
+
+    implementation "com.github.ben-manes.caffeine:caffeine:$caffeine_version"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }

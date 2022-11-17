@@ -3,9 +3,7 @@ package no.nav.kafka.dialog
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.common.TextFormat
 import java.io.StringWriter
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlin.streams.toList
 import mu.KotlinLogging
 import no.nav.kafka.dialog.Metrics.cRegistry
 import org.http4k.core.HttpHandler
@@ -125,32 +123,12 @@ object PrestopHook {
     fun reset() { prestopHook = false }
 }
 
-fun conditionalWait(ms: Long) =
-    runBlocking {
-
-        log.info { "Will wait $ms ms" }
-
-        val cr = launch {
-            runCatching { delay(ms) }
-                .onSuccess { log.info { "waiting completed" } }
-                .onFailure { log.info { "waiting interrupted" } }
-        }
-
-        tailrec suspend fun loop(): Unit = when {
-            cr.isCompleted -> Unit
-            ShutdownHook.isActive() || PrestopHook.isActive() -> cr.cancel()
-            else -> {
-                delay(250L)
-                loop()
-            }
-        }
-
-        loop()
-        cr.join()
-    }
-
 fun env(env: String): String { return System.getenv(env) }
 
 fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
 
 fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
+
+fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+
+fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }

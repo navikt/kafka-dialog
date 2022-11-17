@@ -1,12 +1,11 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: kafka-dialog
+  name: {{ DEPLOY_APP }}
   namespace: team-dialog
   labels:
     team: team-dialog
 spec:
-  webproxy: true
   image: {{ image }}
   port: 8080
   replicas:
@@ -38,27 +37,31 @@ spec:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-dialogmote
+    - secret: sf-arbeidsgiver-kontaktskjema
   filesFrom:
-    - secret: sf-dialogmote
+    - secret: sf-arbeidsgiver-kontaktskjema
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
-    - name: DEPLOY_APP
-      value: {{ DEPLOY_APP }}
+    - name: POSTER_SETTINGS
+      value: NO_POST, SAMPLE
     - name: KAFKA_CLIENTID
-      value: kafka-dialog
+      value: sf-arbeidsgiver-kontaktskjema
     - name: KAFKA_SECURITY
       value: 'TRUE'
+    - name: KAFKA_SECPROT
+      value: SASL_SSL
+    - name: KAFKA_SASLMEC
+      value: PLAIN
     - name: KAFKA_TOPIC
-      value: 'teampam.stilling-ekstern-1'
+      value: team-innhold.arbeidsgiver-kontaktskjema
     - name: MS_BETWEEN_WORK
-      value: '2400000'
+      value: '300000'
+    - name: VAULT_INSTANCE
+      value: GCP
     - name: SF_INSTANCE
       value: PRODUCTION
     - name: SF_TOKENHOST
       value: 'https://login.salesforce.com'
     - name: SF_VERSION
       value: 'v48.0'
-    - name: VAULT_INSTANCE
-      value: GCP
