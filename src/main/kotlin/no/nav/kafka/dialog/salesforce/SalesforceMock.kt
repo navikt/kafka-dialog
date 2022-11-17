@@ -1,4 +1,4 @@
-package no.nav.sf.library
+package no.nav.kafka.dialog.salesforce
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -9,6 +9,9 @@ import no.nav.kafka.dialog.AnEnvironment
 import no.nav.kafka.dialog.EV_sfVersion
 import no.nav.kafka.dialog.JWTClaimBase
 import no.nav.kafka.dialog.decodeB64
+import no.nav.sf.library.SFsObjectRest
+import no.nav.sf.library.SFsObjectStatusBase
+import no.nav.sf.library.toJson
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request

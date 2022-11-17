@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
+import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -26,10 +27,6 @@ const val EV_vaultInstance = "VAULT_INSTANCE"
 val PROGNAME by lazy { System.getProperty("user.dir").split("/").last() }
 
 val gson = Gson()
-// val json = Json(JsonConfiguration.Stable)
-
-// Non strict variant of json parser
-// val jsonNonStrict = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true, isLenient = true))
 
 fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let { p ->
     when {
@@ -38,23 +35,23 @@ fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let 
             val up = URI(p)
             this(client =
             HttpClients.custom()
-                    .setDefaultRequestConfig(
-                            RequestConfig.custom()
-                                    .setProxy(HttpHost(up.host, up.port, up.scheme))
-                                    .setRedirectsEnabled(false)
-                                    .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
-                                    .build())
-                    .build()
+                .setDefaultRequestConfig(
+                    RequestConfig.custom()
+                        .setProxy(HttpHost(up.host, up.port, up.scheme))
+                        .setRedirectsEnabled(false)
+                        .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+                        .build())
+                .build()
             )
         }
     }
 }
 
 fun HttpHandler.measure(r: Request, m: Histogram): Response =
-        m.startTimer().let { rt -> this(r).also {
-            rt.observeDuration()
-            File("/tmp/lastTokenCall").writeText("uri: ${r.uri}, method: ${r.method}, body: ${r.body}, headers ${r.headers}")
-        } }
+    m.startTimer().let { rt -> this(r).also {
+        rt.observeDuration()
+        File("/tmp/lastTokenCall").writeText("uri: ${r.uri}, method: ${r.method}, body: ${r.body}, headers ${r.headers}")
+    } }
 
 // general pattern for sealed class with 2 options; missing (left side) versus something else (right side)
 inline fun <reified B, reified L : B, reified R : B, T> B.fold(lOp: (L) -> T, rOp: (R) -> T): T = when (this) {
@@ -84,52 +81,62 @@ enum class VaultInstancePaths(val path: VaultPaths) {
 }
 
 private fun String.getVaultInstance(): VaultInstancePaths =
-        if (VaultInstancePaths.values().map { it.name }.contains(this.toUpperCase())) VaultInstancePaths.valueOf(this)
-        else VaultInstancePaths.LOCAL
+    if (VaultInstancePaths.values().map { it.name }.contains(this.toUpperCase())) VaultInstancePaths.valueOf(this)
+    else VaultInstancePaths.LOCAL
 
 interface AVault {
     companion object {
         private fun getOrDefault(file: File, d: String): String = runCatching { file.readText(Charsets.UTF_8) }
-                .onSuccess { log.info { "Vault- read ${file.absolutePath}" } }
-                .onFailure { log.error { "Vault- couldn't read ${file.absolutePath}" } }
-                .getOrDefault(d)
+            .onSuccess { log.info { "Vault- read ${file.absolutePath}" } }
+            .onFailure { log.error { "Vault- couldn't read ${file.absolutePath}" } }
+            .getOrDefault(d)
 
         fun getSecretOrDefault(
             k: String,
             d: String = "",
             p: VaultPaths = AnEnvironment.getEnvOrDefault(EV_vaultInstance, "LOCAL").getVaultInstance().path
         ): String =
-                getOrDefault(File("${p.secrets}$k"), d)
+            getOrDefault(File("${p.secrets}$k"), d)
 
         fun getServiceUserOrDefault(
             k: String,
             d: String = "",
             p: VaultPaths = AnEnvironment.getEnvOrDefault(EV_vaultInstance, "LOCAL").getVaultInstance().path
         ): String =
-                getOrDefault(File("${p.serviceUser}$k"), d)
+            getOrDefault(File("${p.serviceUser}$k"), d)
     }
 }
 
 fun conditionalWait(ms: Long) =
-        runBlocking {
+    runBlocking {
 
-            log.info { "Will wait $ms ms" }
+        log.info { "Will wait $ms ms" }
 
-            val cr = launch {
-                runCatching { delay(ms) }
-                        .onSuccess { log.info { "waiting completed" } }
-                        .onFailure { log.info { "waiting interrupted" } }
-            }
-
-            tailrec suspend fun loop(): Unit = when {
-                cr.isCompleted -> Unit
-                ShutdownHook.isActive() || PrestopHook.isActive() -> cr.cancel()
-                else -> {
-                    delay(250L)
-                    loop()
-                }
-            }
-
-            loop()
-            cr.join()
+        val cr = launch {
+            runCatching { delay(ms) }
+                .onSuccess { log.info { "waiting completed" } }
+                .onFailure { log.info { "waiting interrupted" } }
         }
+
+        tailrec suspend fun loop(): Unit = when {
+            cr.isCompleted -> Unit
+            ShutdownHook.isActive() || PrestopHook.isActive() -> cr.cancel()
+            else -> {
+                delay(250L)
+                loop()
+            }
+        }
+
+        loop()
+        cr.join()
+    }
+
+fun env(env: String): String { return System.getenv(env) }
+
+fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
+
+fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
+
+fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+
+fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }

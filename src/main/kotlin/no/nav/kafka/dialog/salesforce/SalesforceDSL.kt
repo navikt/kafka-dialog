@@ -9,10 +9,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
-import no.nav.sf.library.SF_MOCK_PATH_oAuth
-import no.nav.sf.library.SF_MOCK_PATH_sObject
-import no.nav.sf.library.SF_PATH_composite
-import no.nav.sf.library.SalesforceMock
+import no.nav.kafka.dialog.metrics.kCommonMetrics
+import no.nav.kafka.dialog.salesforce.SF_MOCK_PATH_oAuth
+import no.nav.kafka.dialog.salesforce.SF_MOCK_PATH_sObject
+import no.nav.kafka.dialog.salesforce.SF_PATH_composite
+import no.nav.kafka.dialog.salesforce.SalesforceMock
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method

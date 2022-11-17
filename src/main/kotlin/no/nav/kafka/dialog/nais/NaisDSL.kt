@@ -3,9 +3,8 @@ package no.nav.kafka.dialog
 import io.prometheus.client.Gauge
 import io.prometheus.client.exporter.common.TextFormat
 import java.io.StringWriter
-import kotlin.streams.toList
 import mu.KotlinLogging
-import no.nav.kafka.dialog.Metrics.cRegistry
+import no.nav.kafka.dialog.metrics.Metrics.cRegistry
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
@@ -122,13 +121,3 @@ object PrestopHook {
     fun activate() { prestopHook = true }
     fun reset() { prestopHook = false }
 }
-
-fun env(env: String): String { return System.getenv(env) }
-
-fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
-
-fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
-
-fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
-
-fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }

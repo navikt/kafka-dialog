@@ -4,13 +4,13 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
-import io.prometheus.client.Gauge
-import io.prometheus.client.Histogram
 import java.io.File
 import java.time.Duration
 import java.util.Properties
 import kotlin.Exception
 import mu.KotlinLogging
+import no.nav.kafka.dialog.metrics.KConsumerMetrics
+import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.sf.library.KafkaMessage
 import no.nav.sf.library.SFsObjectRest
 import no.nav.sf.library.isSuccess
@@ -61,30 +61,6 @@ const val POSTFIX_FAIL = "-FAIL"
 const val POSTFIX_FIRST = "-FIRST"
 const val POSTFIX_LATEST = "-LATEST"
 
-data class KConsumerMetrics(
-    val consumerLatency: Histogram = Histogram
-            .build()
-            .name("kafka_consumer_latency_seconds_histogram")
-            .help("Kafka consumer round trip (latency) since last restart")
-            .register()
-)
-
-data class KCommonMetrics(
-    val pollErrorAuthentication: Gauge = Metrics.registerGauge("pollErrorAuthentication"),
-    val pollErrorAuthorization: Gauge = Metrics.registerGauge("pollErrorAuthorization"),
-    val pollErrorDeserialization: Gauge = Metrics.registerGauge("pollErrorDeserialization"),
-    val commitErrorTimeBetweenPolls: Gauge = Metrics.registerGauge("commitErrorTimeBetweenPolls"),
-    val consumeErrorServiceUnavailable: Gauge = Metrics.registerGauge("consumeErrorServiceUnavailable"),
-    val unknownErrorConsume: Gauge = Metrics.registerGauge("unknownErrorConsume"),
-    val unknownErrorPoll: Gauge = Metrics.registerGauge("unknownErrorPoll"),
-    val unknownErrorCommit: Gauge = Metrics.registerGauge("unknownErrorCommit"),
-    val noOfConsumedEvents: Gauge = Metrics.registerGauge("kafka_consumed_event_gauge"),
-    val noOfPostedEvents: Gauge = Metrics.registerGauge("sf_posted_event_gauge"),
-    val producerIssues: Gauge = Metrics.registerGauge("producer_issues"),
-    val consumerIssues: Gauge = Metrics.registerGauge("consumer_issues"),
-    val latestPostedOffset: Gauge = Metrics.registerLabelGauge("latest_posted_offset", "partition")
-)
-
 enum class ErrorState() {
     NONE, UNKNOWN_ERROR, AUTHORIZATION, AUTHENTICATION, DESERIALIZATION, TIME_BETWEEN_POLLS,
     SERVICE_UNAVAILABLE, TOPIC_ASSIGNMENT
@@ -92,15 +68,8 @@ enum class ErrorState() {
 
 var kErrorState = ErrorState.NONE
 
-val kCommonMetrics = KCommonMetrics()
-
 class KafkaPosterApplication<K, V>(val settings: List<KafkaToSFPoster.Settings> = listOf(), modifier: ((String, Long) -> String)? = null) {
-    val poster =
-        // if (settings.contains(KafkaToSFPoster.Settings.BYTES_AVRO_VALUE) ) {
-        //    KafkaToSFPoster<K, ByteArray>(settings, modifier)
-        // } else {
-            KafkaToSFPoster<K, V>(settings, modifier)
-        // }
+    val poster = KafkaToSFPoster<K, V>(settings, modifier)
 
     private val EV_bootstrapWaitTime = "MS_BETWEEN_WORK" // default to 10 minutes
     private val bootstrapWaitTime = AnEnvironment.getEnvOrDefault(EV_bootstrapWaitTime, "600000").toLong()
@@ -253,15 +222,6 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     }
 }
 
-/*
-// String String from GCP:
-class PlainKafkaConsumer(topic: String = AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).trim(), fromBeginning: Boolean = false) : AKafkaConsumer<String, String>(AKafkaConsumer.configGCP + mapOf<String, Any>(
-    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java),
-    listOf(topic),
-    AnEnvironment.getEnvOrDefault(EV_kafkaPollNDuration, "10000").toLong(),
-    fromBeginning)
- */
 open class AKafkaConsumer<K, V>(
     val config: Map<String, Any>,
     val topics: List<String> = AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).getKafkaTopics(),
@@ -529,6 +489,10 @@ private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, re
                         log.info { "Consumer finished, leaving\n" +
                                 "MsgBoard: $kafkaConsumerOffsetRangeBoard" }
                         Pollstate.FINISHED
+                    }
+                    else -> {
+                        log.error { "Illegal state" }
+                        Pollstate.FAILURE
                     }
                 }
             }
