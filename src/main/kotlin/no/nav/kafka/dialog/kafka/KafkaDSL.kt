@@ -173,9 +173,9 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     val body = SFsObjectRest(
                         records = cRecords.map {
                             KafkaMessage(
-                                topic = it.topic(),
-                                key = if (encodeKey) it.key().toString().encodeB64() else it.key().toString(),
-                                value = (if (bytesAvroValue) (deserializer.deserialize(it.topic(), it.value() as ByteArray) as V).toString() else it.value())
+                                CRM_Topic__c = it.topic(),
+                                CRM_Key__c = if (encodeKey) it.key().toString().encodeB64() else it.key().toString(),
+                                CRM_Value__c = (if (bytesAvroValue) (deserializer.deserialize(it.topic(), it.value() as ByteArray) as V).toString() else it.value())
                                     .let { value -> if (modifier == null) value.toString().encodeB64() else modifier.invoke(value.toString(), it.offset()).encodeB64() }
                             )
                         }

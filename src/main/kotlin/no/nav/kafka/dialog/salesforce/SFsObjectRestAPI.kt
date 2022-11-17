@@ -36,15 +36,14 @@ data class SFsObjectRest(
     }
 }
 
-// @Serializable
 data class KafkaMessage(
     val attributes: SFsObjectRestAttributes = SFsObjectRestAttributes(),
     /*@SerialName("CRM_Topic__c")*/
-    val topic: String,
+    val CRM_Topic__c: String,
     /*@SerialName("CRM_Key__c")*/
-    val key: String,
+    val CRM_Key__c: String,
     /*@SerialName("CRM_Value__c")*/
-    val value: String
+    val CRM_Value__c: String
 )
 
 // @Serializable
@@ -72,15 +71,15 @@ data class SFsObjectRestWithOffset(
 data class KafkaMessageWithOffset(
     val attributes: SFsObjectRestAttributes = SFsObjectRestAttributes(),
     /*@SerialName("CRM_Topic__c")*/
-    val topic: String,
+    val CRM_Topic__c: String,
     /*@SerialName("CRM_Key__c")*/
-    val key: String,
+    val CRM_Key__c: String,
     /*@SerialName("CRM_Value__c")*/
-    val value: String,
+    val CRM_Value__c: String,
     /*@SerialName("CRM_Partition__c")*/
-    val partition: Int,
+    val CRM_Partition__c: Int,
     /*@SerialName("CRM_Offset__c")*/
-    val offset: Long
+    val CRM_Offset__c: Long
 )
 
 // @Serializable

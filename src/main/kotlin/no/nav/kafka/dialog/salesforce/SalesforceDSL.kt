@@ -7,7 +7,6 @@ import java.security.PrivateKey
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.salesforce.SF_MOCK_PATH_oAuth
@@ -31,11 +30,9 @@ private val log = KotlinLogging.logger { }
  */
 
 sealed class KeystoreBase {
-
     object Missing : KeystoreBase()
 
     data class Exists(val privateKey: PrivateKey) : KeystoreBase() {
-
         fun sign(data: ByteArray): SignatureBase = runCatching {
             java.security.Signature.getInstance("SHA256withRSA")
                     .apply {
@@ -44,19 +41,14 @@ sealed class KeystoreBase {
                     }
                     .run { SignatureBase.Exists(sign().encodeB64()) }
         }
-                .onFailure {
-                    log.error { "Signing failed - ${it.localizedMessage}" }
-                }
-                .getOrDefault(SignatureBase.Missing)
+            .onFailure { log.error { "Signing failed - ${it.localizedMessage}" } }
+            .getOrDefault(SignatureBase.Missing)
     }
 
-    fun signCheckIsOk(): Boolean = this.fold<KeystoreBase, Missing, Exists, Boolean>(
-            { false },
-            { it.sign("something".toByteArray())
-                    .fold<SignatureBase, SignatureBase.Missing, SignatureBase.Exists, Boolean>(
-                            { false }, { true }
-                    )
-            })
+    fun signCheckIsOk(): Boolean = when (this) {
+        is Missing -> false
+        else -> ((this as Exists).sign("something".toByteArray())) != SignatureBase.Missing
+    }
 
     companion object {
         fun fromBase64(ksB64: String, ksPwd: String, pkAlias: String, pkPwd: String): KeystoreBase = runCatching {
@@ -81,7 +73,7 @@ sealed class SignatureBase {
 sealed class JWTClaimBase {
     object Missing : JWTClaimBase()
 
-    @Serializable
+    // @Serializable
     data class Exists(
         val iss: String,
         val aud: String,
@@ -104,7 +96,7 @@ sealed class JWTClaimBase {
                 .getOrDefault(Missing)
     }
 
-    @Serializable
+    // @Serializable
     data class Header(val alg: String = "RS256") {
         fun toJson(): String = gson.toJson(this)
     }
@@ -113,7 +105,7 @@ sealed class JWTClaimBase {
 sealed class SFAccessToken {
     object Missing : SFAccessToken()
 
-    @Serializable
+    // @Serializable
     data class Exists(
         val access_token: String = "",
         val scope: String = "",
