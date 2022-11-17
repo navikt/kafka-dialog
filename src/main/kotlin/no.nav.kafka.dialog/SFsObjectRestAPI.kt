@@ -1,10 +1,11 @@
 package no.nav.sf.library
 
+import com.google.gson.reflect.TypeToken
+import java.lang.reflect.Type
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
 import mu.KotlinLogging
-import no.nav.kafka.dialog.json
+import no.nav.kafka.dialog.gson
 import org.http4k.core.Response
 import org.http4k.core.Status
 
@@ -25,10 +26,11 @@ data class SFsObjectRest(
     val allOrNone: Boolean = true,
     val records: List<KafkaMessage>
 ) {
-    fun toJson() = json.stringify(serializer(), this)
+
+    fun toJson() = gson.toJson(this) // json.stringify(serializer(), this)
 
     companion object {
-        fun fromJson(data: String): SFsObjectRest = runCatching { json.parse(serializer(), data) }
+        fun fromJson(data: String): SFsObjectRest = runCatching { gson.fromJson(data, SFsObjectRest::class.java) as SFsObjectRest/*json.parse(serializer(), data)*/ }
                 .onFailure {
                     log.error { "Parsing of SFsObjectRest request failed - ${it.localizedMessage}" }
                 }
@@ -54,10 +56,10 @@ data class SFsObjectRestWithOffset(
     val allOrNone: Boolean = true,
     val records: List<KafkaMessageWithOffset>
 ) {
-    fun toJson() = json.stringify(serializer(), this)
+    fun toJson() = gson.toJson(this)
 
     companion object {
-        fun fromJson(data: String): SFsObjectRestWithOffset = runCatching { json.parse(serializer(), data) }
+        fun fromJson(data: String): SFsObjectRestWithOffset = runCatching { gson.fromJson(data, SFsObjectRestWithOffset::class.java) as SFsObjectRestWithOffset }
             .onFailure {
                 log.error { "Parsing of SFsObjectRest request failed - ${it.localizedMessage}" }
             }
@@ -104,7 +106,8 @@ sealed class SFsObjectStatusBase {
 
     companion object {
         fun fromJson(data: String): List<SFsObjectStatusBase> = runCatching {
-            json.parse(SFsObjectStatus.serializer().list, data)
+            val listOfMyClassObject: Type = object : TypeToken<ArrayList<SFsObjectStatusBase>>() {}.getType()
+            gson.fromJson(data, listOfMyClassObject) as List<SFsObjectStatusBase> // json.parse(SFsObjectStatus.serializer().list, data)
         }
                 .onFailure { log.error { "Parsing of Salesforce sObject REST response failed - ${it.localizedMessage}" } }
                 .getOrDefault(listOf(SFsObjectStatusInvalid))
@@ -133,7 +136,7 @@ internal fun List<SFsObjectStatusBase>.getErrMessage(): String = runCatching {
         .getOrDefault("")
 
 internal fun List<SFsObjectStatusBase.SFsObjectStatus>.toJson(): String =
-        json.stringify(SFsObjectStatusBase.SFsObjectStatus.serializer().list, this)
+        gson.toJson(this)
 
 fun Response.isSuccess(): Boolean = when (status) {
     Status.OK -> SFsObjectStatusBase.fromJson(bodyString()).let { status ->

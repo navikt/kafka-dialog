@@ -105,14 +105,15 @@ sealed class JWTClaimBase {
         val exp: String
     ) : JWTClaimBase() {
 
-        private fun toJson(): String = json.stringify(serializer(), this)
+        private fun toJson(): String = gson.toJson(this)
         fun addHeader(): String = "${Header().toJson().encodeB64UrlSafe()}.${this.toJson().encodeB64UrlSafe()}"
     }
 
     companion object {
         // use in MOCK
         fun fromJson(data: String): JWTClaimBase = runCatching {
-            json.parse(Exists.serializer(), data) }
+            gson.fromJson(data, Exists::class.java)
+        }
                 .onFailure {
                     log.error { "Parsing of JWTClaim failed - ${it.localizedMessage}" }
                 }
@@ -121,7 +122,7 @@ sealed class JWTClaimBase {
 
     @Serializable
     data class Header(val alg: String = "RS256") {
-        fun toJson(): String = json.stringify(serializer(), this)
+        fun toJson(): String = gson.toJson(this)
     }
 }
 
@@ -148,7 +149,7 @@ sealed class SFAccessToken {
     }
 
     companion object {
-        fun fromJson(data: String): SFAccessToken = runCatching { json.parse(Exists.serializer(), data) }
+        fun fromJson(data: String): SFAccessToken = runCatching { gson.fromJson(data, Exists::class.java) }
                 .onFailure {
                     log.error { "Parsing of authorization response failed - ${it.localizedMessage}" }
                 }

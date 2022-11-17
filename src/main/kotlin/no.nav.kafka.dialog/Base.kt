@@ -1,13 +1,12 @@
 package no.nav.kafka.dialog
 
+import com.google.gson.Gson
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import mu.KotlinLogging
 import org.apache.http.HttpHost
 import org.apache.http.client.config.CookieSpecs
@@ -26,10 +25,11 @@ const val EV_vaultInstance = "VAULT_INSTANCE"
 // program name will default to current directory name
 val PROGNAME by lazy { System.getProperty("user.dir").split("/").last() }
 
-val json = Json(JsonConfiguration.Stable)
+val gson = Gson()
+// val json = Json(JsonConfiguration.Stable)
 
 // Non strict variant of json parser
-val jsonNonStrict = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true, isLenient = true))
+// val jsonNonStrict = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true, isLenient = true))
 
 fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let { p ->
     when {
