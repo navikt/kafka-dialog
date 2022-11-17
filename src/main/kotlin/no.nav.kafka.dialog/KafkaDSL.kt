@@ -146,7 +146,7 @@ val registryClient = CachedSchemaRegistryClient(kafkaSchemaRegistryUrl, 100, sch
 // Create once in app, and keep for token cache etc.
 class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifier: ((String, Long) -> String)? = null) {
     enum class Settings {
-        FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
+        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
     }
     val sfClient = SalesforceClient()
     var numberOfWorkSessionsWithoutEvents = 0
