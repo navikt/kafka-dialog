@@ -6,9 +6,9 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import mu.KotlinLogging
 import no.nav.kafka.dialog.AnEnvironment
-import no.nav.kafka.dialog.EV_sfVersion
 import no.nav.kafka.dialog.JWTClaimBase
 import no.nav.kafka.dialog.decodeB64
+import no.nav.kafka.dialog.env_SF_VERSION
 import no.nav.sf.library.SFsObjectRest
 import no.nav.sf.library.SFsObjectStatusBase
 import no.nav.sf.library.toJson
@@ -47,9 +47,9 @@ const val SF_MOCK_VALUE_tokenType = "Bearer"
 // NB! THE MOCK PATHS are used in related client.
 // Thus, these reflects the real world - DO NOT CHANGE unless the real world change...
 const val SF_MOCK_PATH_oAuth = "/services/oauth2/token"
-val SF_MOCK_PATH_sObject = lazy { "/services/data/${AnEnvironment.getEnvOrDefault(EV_sfVersion, "v48.0")}/composite/sobjects" }
+val SF_MOCK_PATH_sObject = lazy { "/services/data/${AnEnvironment.getEnvOrDefault(env_SF_VERSION, "v48.0")}/composite/sobjects" }
 
-val SF_PATH_composite = lazy { "/services/data/${AnEnvironment.getEnvOrDefault(EV_sfVersion, "v48.0")}/composite/" }
+val SF_PATH_composite = lazy { "/services/data/${AnEnvironment.getEnvOrDefault(env_SF_VERSION, "v48.0")}/composite/" }
 
 const val SF_MOCK_AT_TTL = 3L
 val SF_MOCK_AT_UNIT = TimeUnit.MINUTES

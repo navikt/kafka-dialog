@@ -23,28 +23,11 @@ import org.http4k.core.Status
 
 private val log = KotlinLogging.logger { }
 
-// Salesforce environment dependencies
-const val EV_sfInstance = "SF_INSTANCE"
-const val EV_sfTokenHost = "SF_TOKENHOST"
-const val EV_sfVersion = "SF_VERSION"
-const val EV_httpsProxy = "HTTPS_PROXY"
-
-const val EV_sfObject = "SF_OBJECT"
-// Salesforce vault dependencies
-const val VAULT_sfClientID = "SFClientID"
-const val VAULT_sfUsername = "SFUsername"
-
-// Salesforce vault dependencies related to keystore for signed JWT
-const val VAULT_keystoreB64 = "keystoreJKSB64"
-const val VAULT_ksPassword = "KeystorePassword"
-const val VAULT_pkAlias = "PrivateKeyAlias"
-const val VAULT_pkPwd = "PrivateKeyPassword"
-
 /**
  * Getting access token from Salesforce is a little bit involving due to
  * - Need a private key from a key store where the public key is in the connected app in Salesforce
  * - Need to sign a claim (some facts about salesforce) with the private key
- * - Need a access token request using the signed claim
+ * - Need an access token request using the signed claim
  */
 
 sealed class KeystoreBase {
@@ -191,14 +174,14 @@ data class SFMetrics(
 class SalesforceClient(
     private val useCompositePath: Boolean = false,
     private val httpClient: Lazy<HttpHandler> = getHttpClientByInstance(SalesforceMock(10L, TimeUnit.SECONDS)),
-    private val tokenHost: Lazy<String> = lazy { AnEnvironment.getEnvOrDefault(EV_sfTokenHost) },
-    private val clientID: String = AVault.getSecretOrDefault(VAULT_sfClientID),
-    private val username: String = AVault.getSecretOrDefault(VAULT_sfUsername),
+    private val tokenHost: Lazy<String> = lazy { AnEnvironment.getEnvOrDefault(env_SF_TOKENHOST) },
+    private val clientID: String = AVault.getSecretOrDefault(secret_SFClientID),
+    private val username: String = AVault.getSecretOrDefault(secret_SFUsername),
     private val keystore: KeystoreBase = KeystoreBase.fromBase64(
-        AVault.getSecretOrDefault(VAULT_keystoreB64),
-        AVault.getSecretOrDefault(VAULT_ksPassword),
-        AVault.getSecretOrDefault(VAULT_pkAlias),
-        AVault.getSecretOrDefault(VAULT_pkPwd)
+        AVault.getSecretOrDefault(secret_keystoreJKSB64),
+        AVault.getSecretOrDefault(secret_KeystorePassword),
+        AVault.getSecretOrDefault(secret_PrivateKeyAlias),
+        AVault.getSecretOrDefault(secret_PrivateKeyPassword)
 ),
     private val retryDelay: Long = 1_500,
     transferAT: SFAccessToken = SFAccessToken.Missing
@@ -352,11 +335,11 @@ class SalesforceClient(
         val metrics = SFMetrics()
 
         fun getHttpClientByInstance(mockRef: SalesforceMock): Lazy<HttpHandler> = lazy {
-            log.info { "crm-utilities : getHttpClientByInstance - SFInstance : ${AnEnvironment.getEnvOrDefault(EV_sfInstance, "LOCAL (Default)")} SFVersion : ${AnEnvironment.getEnvOrDefault(EV_sfVersion, "(Default)")} VaultInstance : ${AnEnvironment.getEnvOrDefault(EV_vaultInstance, "(Default)")}" }
-            when (AnEnvironment.getEnvOrDefault(EV_sfInstance, "LOCAL")) {
+            log.info { "crm-utilities : getHttpClientByInstance - SFInstance : ${AnEnvironment.getEnvOrDefault(env_SF_INSTANCE, "LOCAL (Default)")} SFVersion : ${AnEnvironment.getEnvOrDefault(env_SF_VERSION, "(Default)")} VaultInstance : ${AnEnvironment.getEnvOrDefault(EV_vaultInstance, "(Default)")}" }
+            when (AnEnvironment.getEnvOrDefault(env_SF_INSTANCE, "LOCAL")) {
                 "LOCAL" -> mockRef.client
-                "PREPROD" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(EV_httpsProxy))
-                "PRODUCTION" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(EV_httpsProxy))
+                "PREPROD" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(env_HTTPS_PROXY))
+                "PRODUCTION" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(env_HTTPS_PROXY))
                 else -> ApacheClient()
             }
         }

@@ -30,19 +30,6 @@ private val log = KotlinLogging.logger {}
 
 const val KAFKA_LOCAL = "localhost:9092"
 
-// kafka environment dependencies
-const val EV_kafkaBrokers = "KAFKA_BROKERS" // default to localhost:
-const val EV_kafkaClientID = "KAFKA_CLIENTID" // default to PROGNAME
-const val EV_kafkaSecurity = "KAFKA_SECURITY" // default to false
-const val EV_kafkaTopics = "KAFKA_TOPIC" // default to PROGNAME
-const val EV_kafkaPollDuration = "KAFKA_POLLDURATION" // default to 10_000L
-const val EV_kafkaKeystorePath = "KAFKA_KEYSTORE_PATH"
-const val EV_kafkaCredstorePassword = "KAFKA_CREDSTORE_PASSWORD"
-const val EV_kafkaTruststorePath = "KAFKA_TRUSTSTORE_PATH"
-const val EV_kafkaSchemaRegistry = "KAFKA_SCHEMA_REGISTRY"
-const val EV_kafkaSchemaRegistryUser = "KAFKA_SCHEMA_REGISTRY_USER"
-const val EV_kafkaSchemaRegistryPassword = "KAFKA_SCHEMA_REGISTRY_PASSWORD"
-
 const val EV_kafkaProducerTimeout = "KAFKA_PRODUCERTIMEOUT" // default to 31_000L
 
 // additional kafka environment dependencies - iff kafka security is enabled
@@ -103,11 +90,11 @@ private fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: Mut
         "$it:[${firstOffset[it]}-${lastOffset[it]}]"
     }.joinToString(",")
 }
-val kafkaSchemaRegistryUrl = AnEnvironment.getEnvOrDefault(EV_kafkaSchemaRegistry)
+val kafkaSchemaRegistryUrl = AnEnvironment.getEnvOrDefault(env_KAFKA_SCHEMA_REGISTRY)
 
 val schemaRegistryClientConfig = mapOf<String, Any>(
     SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
-    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${AnEnvironment.getEnvOrDefault(EV_kafkaSchemaRegistryUser)}:${AnEnvironment.getEnvOrDefault(EV_kafkaSchemaRegistryPassword)}"
+    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${AnEnvironment.getEnvOrDefault(env_KAFKA_SCHEMA_REGISTRY_USER)}:${AnEnvironment.getEnvOrDefault(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}"
 )
 
 val registryClient = CachedSchemaRegistryClient(kafkaSchemaRegistryUrl, 100, schemaRegistryClientConfig)
@@ -142,13 +129,13 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
 
         val consumer = if (bytesAvroValue) {
             AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig,
-                listOf(AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).trim()),
-                AnEnvironment.getEnvOrDefault(EV_kafkaPollDuration, "10000").toLong(),
+                listOf(AnEnvironment.getEnvOrDefault(env_KAFKA_TOPIC, PROGNAME).trim()),
+                AnEnvironment.getEnvOrDefault(env_KAFKA_POLLDURATION, "10000").toLong(),
                 fromBeginning)
         } else {
             AKafkaConsumer<K, V>(kafkaConsumerConfig,
-                listOf(AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).trim()),
-                AnEnvironment.getEnvOrDefault(EV_kafkaPollDuration, "10000").toLong(),
+                listOf(AnEnvironment.getEnvOrDefault(env_KAFKA_TOPIC, PROGNAME).trim()),
+                AnEnvironment.getEnvOrDefault(env_KAFKA_POLLDURATION, "10000").toLong(),
                 fromBeginning)
         }
 
@@ -224,8 +211,8 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
 
 open class AKafkaConsumer<K, V>(
     val config: Map<String, Any>,
-    val topics: List<String> = AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).getKafkaTopics(),
-    val pollDuration: Long = AnEnvironment.getEnvOrDefault(EV_kafkaPollDuration, "10000").toLong(),
+    val topics: List<String> = AnEnvironment.getEnvOrDefault(env_KAFKA_TOPIC, PROGNAME).getKafkaTopics(),
+    val pollDuration: Long = AnEnvironment.getEnvOrDefault(env_KAFKA_POLLDURATION, "10000").toLong(),
     val fromBeginning: Boolean = false
 ) {
     fun consume(doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean =
@@ -237,14 +224,14 @@ open class AKafkaConsumer<K, V>(
 
         val configBase: Map<String, Any>
             get() = mapOf<String, Any>(
-                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaBrokers, KAFKA_LOCAL),
-                    ConsumerConfig.GROUP_ID_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaClientID, PROGNAME),
-                    ConsumerConfig.CLIENT_ID_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaClientID, PROGNAME),
+                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_BROKERS, KAFKA_LOCAL),
+                    ConsumerConfig.GROUP_ID_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_CLIENTID, PROGNAME),
+                    ConsumerConfig.CLIENT_ID_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_CLIENTID, PROGNAME),
                     ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
                     ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 200, // Use of SF REST API
                     ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to "false"
             ).let { cMap ->
-                if (AnEnvironment.getEnvOrDefault(EV_kafkaSecurity, "false").toBoolean()) {
+                if (AnEnvironment.getEnvOrDefault(env_KAFKA_SECURITY, "false").toBoolean()) {
                     cMap
                             .addKafkaSecurityProtocolAndMechanism(
                                 AnEnvironment.getEnvOrDefault(EV_kafkaSecProc),
@@ -332,8 +319,8 @@ sealed class KafkaConsumerStates {
 
 internal fun <K, V> getKafkaConsumerByConfig(
     config: Map<String, Any>,
-    topics: List<String> = AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).getKafkaTopics(),
-    pollDuration: Long = AnEnvironment.getEnvOrDefault(EV_kafkaPollDuration, "10000").toLong(),
+    topics: List<String> = AnEnvironment.getEnvOrDefault(env_KAFKA_TOPIC, PROGNAME).getKafkaTopics(),
+    pollDuration: Long = AnEnvironment.getEnvOrDefault(env_KAFKA_POLLDURATION, "10000").toLong(),
     fromBeginning: Boolean = false,
     doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates
 ): Boolean =
@@ -543,7 +530,7 @@ sealed class AllRecords<out K, out V> {
 
 fun <K, V> getAllRecords(
     config: Map<String, Any>,
-    topics: List<String> = AnEnvironment.getEnvOrDefault(EV_kafkaTopics, PROGNAME).getKafkaTopics()
+    topics: List<String> = AnEnvironment.getEnvOrDefault(env_KAFKA_TOPIC, PROGNAME).getKafkaTopics()
 ): AllRecords<K, V> =
         try {
             KafkaConsumer<K, V>(Properties().apply { config.forEach { set(it.key, it.value) } })
@@ -609,13 +596,13 @@ class AKafkaProducer<K, V>(
 
         val configBase: Map<String, Any>
             get() = mapOf<String, Any>(
-                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaBrokers, KAFKA_LOCAL),
-                    ProducerConfig.CLIENT_ID_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaClientID, PROGNAME),
+                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_BROKERS, KAFKA_LOCAL),
+                    ProducerConfig.CLIENT_ID_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_CLIENTID, PROGNAME),
                     ProducerConfig.ACKS_CONFIG to "all",
                     ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaProducerTimeout, "31000").toInt()
 
             ).let { cMap ->
-                if (AnEnvironment.getEnvOrDefault(EV_kafkaSecurity, "false").toBoolean()) {
+                if (AnEnvironment.getEnvOrDefault(env_KAFKA_SECURITY, "false").toBoolean()) {
                     cMap
                             .addKafkaSecurityProtocolAndMechanism(
                                     AnEnvironment.getEnvOrDefault(EV_kafkaSecProc),

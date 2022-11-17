@@ -20,19 +20,13 @@ private val log = KotlinLogging.logger { }
 const val NAIS_URL = "http://localhost:"
 const val NAIS_DEFAULT_PORT = 8080
 
-const val NAIS_ISALIVE = "/isAlive"
-const val NAIS_ISREADY = "/isReady"
-const val NAIS_METRICS = "/metrics"
-const val NAIS_PRESTOP = "/stop"
-
 private fun String.responseByContent(): Response =
         if (this.isNotEmpty()) Response(Status.OK).body(this) else Response(Status.NO_CONTENT)
 
 fun naisAPI(): HttpHandler = routes(
-
-        NAIS_ISALIVE bind Method.GET to { Response(Status.OK) },
-        NAIS_ISREADY bind Method.GET to { Response(Status.OK) },
-        NAIS_METRICS bind Method.GET to {
+    "/isAlive" bind Method.GET to { Response(Status.OK) },
+    "/isReady" bind Method.GET to { Response(Status.OK) },
+    "/metrics" bind Method.GET to {
             runCatching {
                 StringWriter().let { str ->
                     TextFormat.write004(str, cRegistry.metricFamilySamples())
@@ -45,7 +39,7 @@ fun naisAPI(): HttpHandler = routes(
                     .getOrDefault("")
                     .responseByContent()
         },
-        NAIS_PRESTOP bind Method.GET to {
+    "/stop" bind Method.GET to {
             preStopHook.inc()
             PrestopHook.activate()
             log.info { "Received PreStopHook from NAIS" }

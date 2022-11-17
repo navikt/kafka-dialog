@@ -2,8 +2,6 @@ package no.nav.sf.library
 
 import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import no.nav.kafka.dialog.gson
 import org.http4k.core.Response
@@ -21,7 +19,7 @@ private val log = KotlinLogging.logger { }
  * In this case, post of KafkaMessage containing attribute refering to Salesforce custom object KafkaMessage__c
  */
 
-@Serializable
+// @Serializable
 data class SFsObjectRest(
     val allOrNone: Boolean = true,
     val records: List<KafkaMessage>
@@ -38,20 +36,23 @@ data class SFsObjectRest(
     }
 }
 
-@Serializable
+// @Serializable
 data class KafkaMessage(
     val attributes: SFsObjectRestAttributes = SFsObjectRestAttributes(),
-    @SerialName("CRM_Topic__c") val topic: String,
-    @SerialName("CRM_Key__c") val key: String,
-    @SerialName("CRM_Value__c") val value: String
+    /*@SerialName("CRM_Topic__c")*/
+    val topic: String,
+    /*@SerialName("CRM_Key__c")*/
+    val key: String,
+    /*@SerialName("CRM_Value__c")*/
+    val value: String
 )
 
-@Serializable
+// @Serializable
 data class SFsObjectRestAttributes(
     val type: String = "KafkaMessage__c"
 )
 
-@Serializable
+// @Serializable
 data class SFsObjectRestWithOffset(
     val allOrNone: Boolean = true,
     val records: List<KafkaMessageWithOffset>
@@ -67,17 +68,22 @@ data class SFsObjectRestWithOffset(
     }
 }
 
-@Serializable
+// @Serializable
 data class KafkaMessageWithOffset(
     val attributes: SFsObjectRestAttributes = SFsObjectRestAttributes(),
-    @SerialName("CRM_Topic__c") val topic: String,
-    @SerialName("CRM_Key__c") val key: String,
-    @SerialName("CRM_Value__c") val value: String,
-    @SerialName("CRM_Partition__c") val partition: Int,
-    @SerialName("CRM_Offset__c") val offset: Long
+    /*@SerialName("CRM_Topic__c")*/
+    val topic: String,
+    /*@SerialName("CRM_Key__c")*/
+    val key: String,
+    /*@SerialName("CRM_Value__c")*/
+    val value: String,
+    /*@SerialName("CRM_Partition__c")*/
+    val partition: Int,
+    /*@SerialName("CRM_Offset__c")*/
+    val offset: Long
 )
 
-@Serializable
+// @Serializable
 data class SFsObjectRestAttributesWithOffset(
     val type: String = "KafkaMessage__c",
     val partition: Int = 0,
@@ -97,7 +103,7 @@ data class SFsObjectRestAttributesWithOffset(
 sealed class SFsObjectStatusBase {
     object SFsObjectStatusInvalid : SFsObjectStatusBase()
 
-    @Serializable
+    // @Serializable
     internal data class SFsObjectStatus(
         val id: String = "",
         val success: Boolean,
@@ -114,7 +120,7 @@ sealed class SFsObjectStatusBase {
     }
 }
 
-@Serializable
+// @Serializable
 internal data class SFObjectError(
     val statusCode: String,
     val message: String,
