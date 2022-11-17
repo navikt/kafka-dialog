@@ -44,7 +44,7 @@ spec:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS
-      value: FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE
+      value: FROM_BEGINNING,NO_POST,SAMPLE,RUN_ONCE,ENCODE_KEY,AVRO_VALUE
     - name: KAFKA_CLIENTID
       value: sf-arbeidsgiver-kontaktskjema
     - name: KAFKA_SECURITY
