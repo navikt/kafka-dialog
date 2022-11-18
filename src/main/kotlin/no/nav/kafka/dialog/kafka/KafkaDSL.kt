@@ -115,6 +115,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     fun runWorkSession() {
         if (runOnce && hasRunOnce) {
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
+            return
         }
         var firstOffsetPosted: MutableMap<Int, Long> = mutableMapOf()
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf()
