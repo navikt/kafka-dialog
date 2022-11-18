@@ -1,18 +1,14 @@
 package no.nav.kafka.dialog
 
-import io.prometheus.client.Gauge
-import io.prometheus.client.Histogram
 import java.security.KeyStore
 import java.security.PrivateKey
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import no.nav.kafka.dialog.metrics.ErrorState
+import no.nav.kafka.dialog.metrics.SFMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
-import no.nav.kafka.dialog.salesforce.SF_MOCK_PATH_oAuth
-import no.nav.kafka.dialog.salesforce.SF_MOCK_PATH_sObject
-import no.nav.kafka.dialog.salesforce.SF_PATH_composite
-import no.nav.kafka.dialog.salesforce.SalesforceMock
+import no.nav.kafka.dialog.metrics.kErrorState
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -28,7 +24,6 @@ private val log = KotlinLogging.logger { }
  * - Need to sign a claim (some facts about salesforce) with the private key
  * - Need an access token request using the signed claim
  */
-
 sealed class KeystoreBase {
     object Missing : KeystoreBase()
 
@@ -73,7 +68,6 @@ sealed class SignatureBase {
 sealed class JWTClaimBase {
     object Missing : JWTClaimBase()
 
-    // @Serializable
     data class Exists(
         val iss: String,
         val aud: String,
@@ -86,7 +80,6 @@ sealed class JWTClaimBase {
     }
 
     companion object {
-        // use in MOCK
         fun fromJson(data: String): JWTClaimBase = runCatching {
             gson.fromJson(data, Exists::class.java)
         }
@@ -133,51 +126,19 @@ sealed class SFAccessToken {
     }
 }
 
-// some metrics for Salesforce client
-data class SFMetrics(
-    val responseLatency: Histogram = Histogram
-            .build()
-            .name("sf_response_latency_seconds_histogram")
-            .help("Salesforce response latency since last restart")
-            .register(),
-    val failedAccessTokenRequest: Gauge = Gauge
-            .build()
-            .name("sf_failed_access_token_request_gauge")
-            .help("No. of failed access token requests to Salesforce since last restart")
-            .register(),
-    val postRequest: Gauge = Gauge
-            .build()
-            .name("sf_post_request_gauge")
-            .help("No. of post requests to Salesforce since last restart")
-            .register(),
-    val accessTokenRefresh: Gauge = Gauge
-            .build()
-            .name("sf_access_token_refresh_gauge")
-            .help("No. of required access token refresh to Salesforce since last restart")
-            .register()
-) {
-    fun clear() {
-        failedAccessTokenRequest.clear()
-        postRequest.clear()
-        accessTokenRefresh.clear()
-    }
-}
-
 class SalesforceClient(
-    private val useCompositePath: Boolean = false,
-    private val httpClient: Lazy<HttpHandler> = getHttpClientByInstance(SalesforceMock(10L, TimeUnit.SECONDS)),
-    private val tokenHost: Lazy<String> = lazy { AnEnvironment.getEnvOrDefault(env_SF_TOKENHOST) },
-    private val clientID: String = AVault.getSecretOrDefault(secret_SFClientID),
-    private val username: String = AVault.getSecretOrDefault(secret_SFUsername),
-    private val keystore: KeystoreBase = KeystoreBase.fromBase64(
-        AVault.getSecretOrDefault(secret_keystoreJKSB64),
-        AVault.getSecretOrDefault(secret_KeystorePassword),
-        AVault.getSecretOrDefault(secret_PrivateKeyAlias),
-        AVault.getSecretOrDefault(secret_PrivateKeyPassword)
+    private val httpClient: Lazy<HttpHandler> = lazy { ApacheClient.supportProxy(env(env_HTTPS_PROXY)) },
+    private val tokenHost: Lazy<String> = lazy { env(env_SF_TOKENHOST) },
+    private val clientID: String = env(secret_SFClientID),
+    private val username: String = env(secret_SFUsername),
+    private val keystore: KeystoreBase = KeystoreBase.fromBase64(env(secret_keystoreJKSB64), env(secret_KeystorePassword),
+        env(secret_PrivateKeyAlias), env(secret_PrivateKeyPassword)
 ),
     private val retryDelay: Long = 1_500,
     transferAT: SFAccessToken = SFAccessToken.Missing
 ) {
+    val SF_PATH_sObject = lazy { "/services/data/${env(env_SF_VERSION)}/composite/sobjects" }
+
     private val claim: JWTClaimBase.Exists
         get() = JWTClaimBase.Exists(
             iss = clientID,
@@ -187,25 +148,22 @@ class SalesforceClient(
         )
 
     private val tokenURL: String
-        get() = "${tokenHost.value}$SF_MOCK_PATH_oAuth"
+        get() = "${tokenHost.value}$SF_PATH_oAuth"
 
     private val accessTokenRequest: Request
         get() = claim.let { c ->
 
             // try to sign the complete claim (header included) using private key
-            val fullClaimSignature = keystore
-                    .fold<
-                            KeystoreBase,
-                            KeystoreBase.Missing,
-                            KeystoreBase.Exists,
-                            SignatureBase>({ SignatureBase.Missing }, { it.sign(c.addHeader().toByteArray()) })
+            val fullClaimSignature = when (keystore) {
+                is KeystoreBase.Missing -> SignatureBase.Missing
+                else -> (keystore as KeystoreBase.Exists).sign(c.addHeader().toByteArray())
+            }
 
             // try to get the signed content
-            val content = fullClaimSignature.fold<
-                    SignatureBase,
-                    SignatureBase.Missing,
-                    SignatureBase.Exists,
-                    String>({ "" }, { it.content })
+            val content = when (fullClaimSignature) {
+                is SignatureBase.Missing -> ""
+                else -> (fullClaimSignature as SignatureBase.Exists).content
+            }
 
             // build the request, the assertion to be verified by host with related public key
             Request(Method.POST, tokenURL)
@@ -226,27 +184,25 @@ class SalesforceClient(
 
     // should do tailrec, but due to only a few iterations ...
     private fun getAccessTokenWithRetries(retry: Int = 1, maxRetries: Int = 4): SFAccessToken =
-            httpClient.value
-                    .measure(accessTokenRequest, metrics.responseLatency)
-
-                    .parseAccessToken()
-                    .fold<SFAccessToken, SFAccessToken.Missing, SFAccessToken.Exists, SFAccessToken>(
-                            {
-                                if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
-                                else {
-                                    runCatching { runBlocking { delay(retry * retryDelay) } }
-                                    getAccessTokenWithRetries(retry + 1, maxRetries)
-                                }
-                            },
-                            { it }
-                    )
+            httpClient.value.measure(accessTokenRequest, metrics.responseLatency).parseAccessToken().let {
+                when (it) {
+                    is SFAccessToken.Missing -> {
+                        if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
+                        else {
+                            runCatching { runBlocking { delay(retry * retryDelay) } }
+                            getAccessTokenWithRetries(retry + 1, maxRetries)
+                        }
+                    }
+                    else -> (it as SFAccessToken.Exists)
+                }
+            }
 
     private var accessToken: SFAccessToken = transferAT
 
     fun enablesObjectPost(doSomething: ((String) -> Response) -> Unit): Boolean {
 
         val doPostRequest: (String, SFAccessToken.Exists) -> Response = { b, at ->
-            httpClient.value.measure(at.getPostRequest(if (useCompositePath) SF_PATH_composite.value else SF_MOCK_PATH_sObject.value).body(b), metrics.responseLatency)
+            httpClient.value.measure(at.getPostRequest(SF_PATH_sObject.value).body(b), metrics.responseLatency)
                     .also { metrics.postRequest.inc() }
         }
 
@@ -257,15 +213,12 @@ class SalesforceClient(
                         Status.UNAUTHORIZED -> {
                             metrics.accessTokenRefresh.inc()
                             // try to get new access token
-                            getAccessTokenWithRetries()
-                                    .fold<
-                                            SFAccessToken,
-                                            SFAccessToken.Missing,
-                                            SFAccessToken.Exists,
-                                            Pair<Response, SFAccessToken>>(
-                                            { Pair(Response(Status.UNAUTHORIZED), it) },
-                                            { Pair(doPostRequest(id, it), it) }
-                                    )
+                            getAccessTokenWithRetries().let {
+                                when (it) {
+                                    is SFAccessToken.Missing -> Pair(Response(Status.UNAUTHORIZED), it)
+                                    else -> Pair(doPostRequest(id, (it as SFAccessToken.Exists)), it)
+                                }
+                            }
                         }
                         Status.OK -> {
                             log.debug { "Returned status OK" }
@@ -292,48 +245,29 @@ class SalesforceClient(
         // in case of missing access token from last invocation or very first start, try refresh
         if (accessToken is SFAccessToken.Missing) accessToken = getAccessTokenWithRetries()
 
-        return accessToken.fold<SFAccessToken, SFAccessToken.Missing, SFAccessToken.Exists, Boolean>(
-                { false },
-                {
-                    log.info { "SF access token exists" }
-                    val transfer: (String) -> Response = { b ->
-                        doPost(b, it).let { p ->
-                            if (it != p.second) accessToken = p.second
-                            p.first
-                        }
+        return when (accessToken) {
+            is SFAccessToken.Missing -> false
+            else -> {
+                log.info { "SF access token exists" }
+                val transfer: (String) -> Response = { b ->
+                    doPost(b, (accessToken as SFAccessToken.Exists)).let { p ->
+                        if ((accessToken as SFAccessToken.Exists) != p.second) accessToken = p.second
+                        p.first
                     }
-                    runCatching { doSomething(transfer) }
-                            .onSuccess {
-                                log.info { "Salesforce - end of sObject post availability with success" }
-                            }
-                            .onFailure {
-                                log.error { "Salesforce - end of sObject post availability failed - ${it.localizedMessage} message - ${it.message }" }
-                            }
-                    true
                 }
-        )
-    }
-
-    // no need to re-read env. variables (static) and transfer access token
-    // vault related params are re-read from vault
-    fun copyRelevant(): SalesforceClient = SalesforceClient(
-            httpClient = httpClient,
-            tokenHost = tokenHost,
-            transferAT = accessToken
-    )
-
-    companion object {
-
-        val metrics = SFMetrics()
-
-        fun getHttpClientByInstance(mockRef: SalesforceMock): Lazy<HttpHandler> = lazy {
-            log.info { "crm-utilities : getHttpClientByInstance - SFInstance : ${AnEnvironment.getEnvOrDefault(env_SF_INSTANCE, "LOCAL (Default)")} SFVersion : ${AnEnvironment.getEnvOrDefault(env_SF_VERSION, "(Default)")} VaultInstance : ${AnEnvironment.getEnvOrDefault(EV_vaultInstance, "(Default)")}" }
-            when (AnEnvironment.getEnvOrDefault(env_SF_INSTANCE, "LOCAL")) {
-                "LOCAL" -> mockRef.client
-                "PREPROD" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(env_HTTPS_PROXY))
-                "PRODUCTION" -> ApacheClient.supportProxy(AnEnvironment.getEnvOrDefault(env_HTTPS_PROXY))
-                else -> ApacheClient()
+                runCatching { doSomething(transfer) }
+                    .onSuccess {
+                        log.info { "Salesforce - end of sObject post availability with success" }
+                    }
+                    .onFailure {
+                        log.error { "Salesforce - end of sObject post availability failed - ${it.message }" }
+                    }
+                true
             }
         }
+    }
+
+    companion object {
+        val metrics = SFMetrics()
     }
 }

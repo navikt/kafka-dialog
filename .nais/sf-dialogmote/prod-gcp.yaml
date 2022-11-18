@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: sf-dialogmote
+  name: {{ DEPLOY_APP }}
   namespace: team-dialog
   labels:
     team: team-dialog
@@ -45,25 +45,17 @@ spec:
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
       value: ENCODE_KEY, AVRO_VALUE
+    - name: KAFKA_POLL_DURATION
+      value: 10000
     - name: KAFKA_CLIENTID
       value: sf-dialogmote-v1
-    - name: KAFKA_SECURITY
-      value: 'TRUE'
-    - name: KAFKA_SECPROT
-      value: SASL_SSL
-    - name: KAFKA_SASLMEC
-      value: PLAIN
     - name: KAFKA_TOPIC
       value: teamsykefravr.isdialogmote-dialogmote-statusendring
     - name: MS_BETWEEN_WORK
-      value: '600000'
-    - name: SF_INSTANCE
-      value: PRODUCTION
+      value: 600000
     - name: SF_TOKENHOST
-      value: 'https://login.salesforce.com'
+      value: https://login.salesforce.com
     - name: SF_VERSION
-      value: 'v48.0'
-    - name: VAULT_INSTANCE
-      value: GCP
+      value: v48.0
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}

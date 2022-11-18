@@ -3,6 +3,8 @@ package no.nav.kafka.dialog
 const val env_DEPLOY_APP = "DEPLOY_APP"
 const val env_POSTER_SETTINGS = "POSTER_SETTINGS"
 
+const val env_MS_BETWEEN_WORK = "MS_BETWEEN_WORK"
+
 // Kafka environment dependencies
 const val env_KAFKA_BROKERS = "KAFKA_BROKERS"
 const val env_KAFKA_CLIENTID = "KAFKA_CLIENTID"
@@ -16,8 +18,9 @@ const val env_KAFKA_SCHEMA_REGISTRY = "KAFKA_SCHEMA_REGISTRY"
 const val env_KAFKA_SCHEMA_REGISTRY_USER = "KAFKA_SCHEMA_REGISTRY_USER"
 const val env_KAFKA_SCHEMA_REGISTRY_PASSWORD = "KAFKA_SCHEMA_REGISTRY_PASSWORD"
 
+const val SF_PATH_oAuth = "/services/oauth2/token"
+
 // Salesforce environment dependencies
-const val env_SF_INSTANCE = "SF_INSTANCE"
 const val env_SF_TOKENHOST = "SF_TOKENHOST"
 const val env_SF_VERSION = "SF_VERSION"
 const val env_HTTPS_PROXY = "HTTPS_PROXY"
@@ -31,3 +34,7 @@ const val secret_keystoreJKSB64 = "keystoreJKSB64"
 const val secret_KeystorePassword = "KeystorePassword"
 const val secret_PrivateKeyAlias = "PrivateKeyAlias"
 const val secret_PrivateKeyPassword = "PrivateKeyPassword"
+
+// Kafka Security protocol mechanism settings
+const val SASL_SSL = "SASL_SSL"
+const val PLAIN = "PLAIN"

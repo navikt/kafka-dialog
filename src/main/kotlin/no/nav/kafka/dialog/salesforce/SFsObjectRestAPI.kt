@@ -55,19 +55,15 @@ data class SFObjectError(
     val fields: List<String> = emptyList()
 )
 
-// internal fun List<SFsObjectStatusBase>.getErrMessage(): String = runCatching {
-//    filterIsInstance<SFsObjectStatusBase.SFsObjectStatus>()
-//            .first { !it.success }.errors.first().message
-// }
-//        .getOrDefault("")
-
 fun Response.isSuccess(): Boolean = when (status) {
     Status.OK -> try {
-        // gson.fromJson(data, listOfMyClassObject) as List<SFsObjectStatusBase>
         val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.getType()
         val parsedResult = gson.fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
         // Salesforce gives 200 OK independent of successful posting of records or not, need to check response value
-        if (parsedResult.all { it.success }) {
+        if (parsedResult.count() == 0) {
+            log.error { "Posting response has no status object successes" }
+            false
+        } else if (parsedResult.all { it.success }) {
             true
         } else {
             log.error { "Posting of at least one record failed" }
