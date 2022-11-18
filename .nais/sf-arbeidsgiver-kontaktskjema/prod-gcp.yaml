@@ -65,3 +65,5 @@ spec:
       value: 'https://login.salesforce.com'
     - name: SF_VERSION
       value: 'v48.0'
+    - name: DEPLOY_APP
+      value: {{ DEPLOY_APP }}

@@ -1,9 +1,8 @@
-package no.nav.sf.library
+package no.nav.kafka.dialog
 
 import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 import mu.KotlinLogging
-import no.nav.kafka.dialog.gson
 import org.http4k.core.Response
 import org.http4k.core.Status
 

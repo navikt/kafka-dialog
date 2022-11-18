@@ -1,5 +1,6 @@
 package no.nav.kafka.dialog
 
+const val env_DEPLOY_APP = "DEPLOY_APP"
 const val env_POSTER_SETTINGS = "POSTER_SETTINGS"
 
 // Kafka environment dependencies
@@ -21,11 +22,11 @@ const val env_SF_TOKENHOST = "SF_TOKENHOST"
 const val env_SF_VERSION = "SF_VERSION"
 const val env_HTTPS_PROXY = "HTTPS_PROXY"
 
-// Salesforce vault dependencies
+// Salesforce required secrets
 const val secret_SFClientID = "SFClientID"
 const val secret_SFUsername = "SFUsername"
 
-// Salesforce vault dependencies related to keystore for signed JWT
+// Salesforce required secrets related to keystore for signed JWT
 const val secret_keystoreJKSB64 = "keystoreJKSB64"
 const val secret_KeystorePassword = "KeystorePassword"
 const val secret_PrivateKeyAlias = "PrivateKeyAlias"

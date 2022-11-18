@@ -7,5 +7,5 @@ jobs:
     uses: ./.github/workflows/workflow.yml
     secrets: inherit
     with:
-      DEPLOY_APP: sf-arbeidsgiver-kontaktskjema
+      DEPLOY_APP: sf-dialogmote
       DEPLOY_CLUSTER: dev-gcp

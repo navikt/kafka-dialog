@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: {{ DEPLOY_APP }}
+  name: sf-dialogmote
   namespace: team-dialog
   labels:
     team: team-dialog
@@ -27,26 +27,24 @@ spec:
   resources:
     limits:
       cpu: 1000m
-      memory: 1024Mi
+      memory: 4096Mi
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 2048Mi
   accessPolicy:
     outbound:
       external:
-        - host: test.salesforce.com
-        - host: navdialog--preprod.my.salesforce.com
+        - host: login.salesforce.com
+        - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-arbeidsgiver-kontaktskjema
+    - secret: sf-dialogmote
   filesFrom:
-    - secret: sf-arbeidsgiver-kontaktskjema
+    - secret: sf-dialogmote
   kafka:
-    pool: nav-dev # enum of nav-dev, nav-prod
+    pool: nav-prod # enum of nav-dev, nav-prod
   env:
-    - name: POSTER_SETTINGS
-      value: DEFAULT
     - name: KAFKA_CLIENTID
-      value: sf-arbeidsgiver-kontaktskjema
+      value: sf-dialogmote-v1
     - name: KAFKA_SECURITY
       value: 'TRUE'
     - name: KAFKA_SECPROT
@@ -54,16 +52,16 @@ spec:
     - name: KAFKA_SASLMEC
       value: PLAIN
     - name: KAFKA_TOPIC
-      value: team-innhold.arbeidsgiver-kontaktskjema
+      value: teamsykefravr.isdialogmote-dialogmote-statusendring
     - name: MS_BETWEEN_WORK
-      value: '300000'
-    - name: VAULT_INSTANCE
-      value: GCP
+      value: '600000'
     - name: SF_INSTANCE
-      value: PREPROD
+      value: PRODUCTION
     - name: SF_TOKENHOST
-      value: 'https://test.salesforce.com'
+      value: 'https://login.salesforce.com'
     - name: SF_VERSION
       value: 'v48.0'
+    - name: VAULT_INSTANCE
+      value: GCP
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}

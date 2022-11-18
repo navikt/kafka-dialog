@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit
 import mu.KotlinLogging
 import no.nav.kafka.dialog.AnEnvironment
 import no.nav.kafka.dialog.JWTClaimBase
+import no.nav.kafka.dialog.SFsObjectRest
+import no.nav.kafka.dialog.SFsObjectStatus
 import no.nav.kafka.dialog.decodeB64
 import no.nav.kafka.dialog.env_SF_VERSION
 import no.nav.kafka.dialog.gson
-import no.nav.sf.library.SFsObjectRest
-import no.nav.sf.library.SFsObjectStatus
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request

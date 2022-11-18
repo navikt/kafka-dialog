@@ -11,9 +11,6 @@ import kotlin.Exception
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.KConsumerMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
-import no.nav.sf.library.KafkaMessage
-import no.nav.sf.library.SFsObjectRest
-import no.nav.sf.library.isSuccess
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -63,7 +60,7 @@ class KafkaPosterApplication<K, V>(val settings: List<KafkaToSFPoster.Settings> 
 
     private val log = KotlinLogging.logger { }
     fun start() {
-        log.info { "Starting" }
+        log.info { "Starting app ${env(env_DEPLOY_APP)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
             loop()
         }
@@ -75,7 +72,6 @@ class KafkaPosterApplication<K, V>(val settings: List<KafkaToSFPoster.Settings> 
         when {
             stop -> Unit.also { log.info { "Stopped" } }
             !stop -> {
-                log.info { "Poster settings from env : $settings" }
                 poster.runWorkSession()
                 conditionalWait(bootstrapWaitTime)
                 loop()
