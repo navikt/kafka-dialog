@@ -20,9 +20,6 @@ private val log = KotlinLogging.logger { }
 const val NAIS_URL = "http://localhost:"
 const val NAIS_DEFAULT_PORT = 8080
 
-private fun String.responseByContent(): Response =
-        if (this.isNotEmpty()) Response(Status.OK).body(this) else Response(Status.NO_CONTENT)
-
 fun naisAPI(): HttpHandler = routes(
     "/isAlive" bind Method.GET to { Response(Status.OK) },
     "/isReady" bind Method.GET to { Response(Status.OK) },
@@ -47,16 +44,14 @@ fun naisAPI(): HttpHandler = routes(
         }
 )
 
-fun naisAPIServer(port: Int): Http4kServer = naisAPI().asServer(Netty(port))
-
 fun enableNAISAPI(port: Int = NAIS_DEFAULT_PORT, doSomething: () -> Unit): Boolean =
-        naisAPIServer(port).let { srv ->
+        naisAPI().asServer(Netty(port)).let { srv ->
             try {
                 srv.start().use {
                     log.info { "NAIS DSL is up and running at port $port" }
                     runCatching(doSomething)
                             .onFailure {
-                                log.error { "Failure during doSomething in enableNAISAPI - ${it.localizedMessage} Stack: ${it.printStackTrace()}" }
+                                log.error { "Failure during run inside enableNAISAPI - ${it.localizedMessage} Stack: ${it.printStackTrace()}" }
                             }
                 }
                 true
@@ -68,6 +63,9 @@ fun enableNAISAPI(port: Int = NAIS_DEFAULT_PORT, doSomething: () -> Unit): Boole
                 log.info { "NAIS DSL is stopped at port $port" }
             }
         }
+
+private fun String.responseByContent(): Response =
+    if (this.isNotEmpty()) Response(Status.OK).body(this) else Response(Status.NO_CONTENT)
 
 object ShutdownHook {
 
