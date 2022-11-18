@@ -46,16 +46,16 @@ spec:
     - name: POSTER_SETTINGS
       value: DEFAULT
     - name: KAFKA_POLL_DURATION
-      value: 10000
+      value: '10000'
     - name: KAFKA_CLIENTID
       value: sf-arbeidsgiver-kontaktskjema
     - name: KAFKA_TOPIC
       value: team-innhold.arbeidsgiver-kontaktskjema
     - name: MS_BETWEEN_WORK
-      value: 300000
+      value: '300000'
     - name: SF_TOKENHOST
       value: https://login.salesforce.com
     - name: SF_VERSION
-      value: v48.0
+      value: 'v48.0'
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
