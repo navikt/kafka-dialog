@@ -13,7 +13,7 @@ env:
   IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
   test:
-    name: Run tests
+    name: ${{ inputs.DEPLOY_APP }} - Run tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -75,7 +75,7 @@ jobs:
           echo "$GITHUB_TOKEN" | docker login --username "$GITHUB_REPOSITORY" --password-stdin https://docker.pkg.github.com
           docker push ${IMAGE}
   deploy:
-    name: Deploy to ${{ inputs.DEPLOY_CLUSTER }}
+    name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
     needs: build
     runs-on: ubuntu-latest
     steps:

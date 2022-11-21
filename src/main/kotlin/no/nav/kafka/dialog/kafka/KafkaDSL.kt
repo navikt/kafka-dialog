@@ -24,7 +24,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
-import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 
@@ -74,7 +73,7 @@ open class AKafkaConsumer<K, V>(
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
                 ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 200,
                 ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to "false",
-                CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to SecurityProtocol.SSL,
+                CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to "SSL",
                 SaslConfigs.SASL_MECHANISM to "PLAIN",
                 SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG to env(env_KAFKA_KEYSTORE_PATH),
                 SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to env(env_KAFKA_CREDSTORE_PASSWORD),
