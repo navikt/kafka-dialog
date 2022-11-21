@@ -76,6 +76,11 @@ data class KCommonMetrics(
     val latestPostedOffset: Gauge = Metrics.registerLabelGauge("latest_posted_offset", "partition")
 )
 
+fun KCommonMetrics.clearWorkSessionMetrics() {
+    noOfConsumedEvents.clear()
+    noOfPostedEvents.clear()
+}
+
 val kCommonMetrics = KCommonMetrics()
 var kErrorState = ErrorState.NONE
 var currentConsumerMessageHost = "DEFAULT"

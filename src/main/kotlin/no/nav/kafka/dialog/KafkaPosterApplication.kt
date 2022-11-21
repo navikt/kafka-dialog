@@ -4,7 +4,7 @@ import mu.KotlinLogging
 
 /**
  * KafkaPosterApplication
- * This is the top level of the kafka to Salesforce integration. Its function is to setup a server with the required
+ * This is the top level of the integration. Its function is to setup a server with the required
  * endpoints for the kubernetes environement (see enableNAISAPI)
  * and create a work loop that alternatives between work sessions (i.e polling from kafka until we are in sync) and
  * an interruptable pause (configured with MS_BETWEEN_WORK).

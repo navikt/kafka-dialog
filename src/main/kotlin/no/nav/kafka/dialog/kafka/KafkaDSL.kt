@@ -50,12 +50,11 @@ sealed class KafkaConsumerStates {
 /**
  * AKafkaConsumer
  * A class on top of the native Apache Kafka client
- * It provides the user a generic function
- * consume(handlePolledBatchOfRecords: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean
- * where one can insert code for what do given a batch of polled records and report the result of that operation with an instance
- * of KafkaConsumerStates. (See usage in KafkaToSFPoster)
+ * It provides a generic function: consume(handlePolledBatchOfRecords: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean
+ * where one can insert code for what to do given a batch of polled records and report the result of that operation
+ * with an instance of KafkaConsumerStates. (See usage in KafkaToSFPoster)
  * This class performs the polling cycle and handles metrics and logging.
- * The first poll gets extra retries due to connectivity latency to clusters when the app is booting up
+ * The first poll gets extra retries due to connectivity latency to clusters when the app is initially booting up
  **/
 open class AKafkaConsumer<K, V>(
     val config: Map<String, Any>,

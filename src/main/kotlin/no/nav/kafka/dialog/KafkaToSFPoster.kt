@@ -4,14 +4,15 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import java.io.File
 import mu.KotlinLogging
+import no.nav.kafka.dialog.metrics.clearWorkSessionMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
 
 /**
  * KafkaToSFPoster
  * This class is responsible for handling a work session, ie polling and posting to salesforce until we are up-to-date with topic
- * Make use of SalesforceClient to setup connection to salesforce
- * Make use of AKafkaConsumer to perform polling and provides code for what how to process each capture batch
+ * Makes use of SalesforceClient to setup connection to salesforce
+ * Makes use of AKafkaConsumer to perform polling. This class provides code for how to process each capture batch
  * (Returns KafkaConsumerStates.IsOk only when we are sure the data has been sent )
  */
 class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifier: ((String, Long) -> String)? = null) {
@@ -37,6 +38,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
             return
         }
+        kCommonMetrics.clearWorkSessionMetrics()
         var firstOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** First offset posted per kafka partition **/
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
