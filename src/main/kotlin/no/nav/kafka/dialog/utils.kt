@@ -43,7 +43,7 @@ fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let 
 
 fun HttpHandler.measure(r: Request, m: Histogram): Response =
     m.startTimer().let { rt -> this(r).also {
-        rt.observeDuration() // TODO Unused timer response here
+        rt.observeDuration() // Histogram will store response time
         File("/tmp/lastTokenCall").writeText("uri: ${r.uri}, method: ${r.method}, body: ${r.body}, headers ${r.headers}")
     } }
 
@@ -52,6 +52,10 @@ fun String.encodeB64UrlSafe(): String = org.apache.commons.codec.binary.Base64.e
 fun String.encodeB64(): String = org.apache.commons.codec.binary.Base64.encodeBase64String(this.toByteArray())
 fun String.decodeB64(): ByteArray = org.apache.commons.codec.binary.Base64.decodeBase64(this)
 
+/**
+ * conditionalWait
+ * Interruptable wait function
+ */
 fun conditionalWait(ms: Long) =
     runBlocking {
 
@@ -76,6 +80,21 @@ fun conditionalWait(ms: Long) =
         cr.join()
     }
 
+/**
+ * offsetMapsToText
+ * Create a string to represent the spans of offsets that has been posted
+ * Example: 0:[12034-16035],1:[11240-15273]
+ */
+fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<Int, Long>): String {
+    if (firstOffset.isEmpty()) return "NONE"
+    return firstOffset.keys.sorted().map {
+        "$it:[${firstOffset[it]}-${lastOffset[it]}]"
+    }.joinToString(",")
+}
+
+/**
+ * Shortcuts for fetching environment variables
+ */
 fun env(env: String): String { return System.getenv(env) }
 
 fun envAsLong(env: String): Long { return System.getenv(env).toLong() }

@@ -47,15 +47,23 @@ sealed class KafkaConsumerStates {
     object IsFinished : KafkaConsumerStates()
 }
 
+/**
+ * AKafkaConsumer
+ * A class on top of the native Apache Kafka client
+ * It provides the user a generic function
+ * consume(handlePolledBatchOfRecords: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean
+ * where one can insert code for what do given a batch of polled records and report the result of that operation with an instance
+ * of KafkaConsumerStates. (See usage in KafkaToSFPoster)
+ * This class performs the polling cycle and handles metrics and logging.
+ * The first poll gets extra retries due to connectivity latency to clusters when the app is booting up
+ **/
 open class AKafkaConsumer<K, V>(
     val config: Map<String, Any>,
     val topic: String = env(env_KAFKA_TOPIC),
-    val pollDuration: Long = envAsLong(env_KAFKA_POLLDURATION),
-    val fromBeginning: Boolean = false
+    val pollDuration: Long = envAsLong(env_KAFKA_POLL_DURATION),
+    val fromBeginning: Boolean = false,
+    val hasCompletedAWorkSession: Boolean = false
 ) {
-    fun consume(doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean =
-            getKafkaConsumerByConfig(config, topic, pollDuration, fromBeginning, doConsume)
-
     companion object {
         val metrics = KConsumerMetrics()
 
@@ -97,80 +105,80 @@ open class AKafkaConsumer<K, V>(
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ByteArrayDeserializer::class.java
             )
     }
-}
 
-internal fun <K, V> getKafkaConsumerByConfig(
-    config: Map<String, Any>,
-    topic: String,
-    pollDuration: Long = envAsLong(env_KAFKA_POLLDURATION),
-    fromBeginning: Boolean = false,
-    doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates
-): Boolean =
-    try {
-        kErrorState = ErrorState.NONE
-        KafkaConsumer<K, V>(Properties().apply { config.forEach { set(it.key, it.value) } })
-            .apply {
-                if (fromBeginning)
-                    this.runCatching {
-                        assign(partitionsFor(topic).map { TopicPartition(it.topic(), it.partition()) })
-                    }.onFailure {
-                        kErrorState = ErrorState.TOPIC_ASSIGNMENT
-                        log.error { "Failure during topic partition(s) assignment for $topic - ${it.message}" }
-                    }
-                else
-                    this.runCatching {
-                        subscribe(listOf(topic))
-                    }.onFailure {
-                        kErrorState = ErrorState.TOPIC_ASSIGNMENT
-                        log.error { "Failure during subscription for $topic -  ${it.message}" }
-                    }
-            }
-            .use { c ->
-                if (fromBeginning) c.runCatching {
-                    c.seekToBeginning(emptyList())
-                }.onFailure {
-                    log.error { "Failure during SeekToBeginning - ${it.message}" }
-                }
-
-                var exitOk = true
-
-                tailrec fun loop(keepGoing: Boolean, retriesLeft: Int = 5): Unit = when {
-                    ShutdownHook.isActive() || PrestopHook.isActive() || !keepGoing -> (if (ShutdownHook.isActive() || PrestopHook.isActive()) { log.warn { "Kafka stopped consuming prematurely due to hook" }; Unit } else Unit)
-                    else -> {
-                        val pollstate = c.pollAndConsumption(pollDuration, retriesLeft > 0, doConsume)
-                        val retries = if (pollstate == Pollstate.RETRY) (retriesLeft - 1).coerceAtLeast(0) else 0
-                        if (pollstate == Pollstate.RETRY) {
-                            // We will retry poll in a minute
-                            log.info { "Kafka consumer - No records found on $topic, retry consumption in 60s. Retries left: $retries" }
-                            conditionalWait(60000)
-                        } else if (pollstate == Pollstate.FAILURE) {
-                            exitOk = false
+    internal fun <K, V> consume(
+        config: Map<String, Any>,
+        topic: String,
+        pollDuration: Long = envAsLong(env_KAFKA_POLL_DURATION),
+        fromBeginning: Boolean = false,
+        hasCompletedAWorkSession: Boolean = false,
+        doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates
+    ): Boolean =
+        try {
+            kErrorState = ErrorState.NONE
+            KafkaConsumer<K, V>(Properties().apply { config.forEach { set(it.key, it.value) } })
+                .apply {
+                    if (fromBeginning)
+                        this.runCatching {
+                            assign(partitionsFor(topic).map { TopicPartition(it.topic(), it.partition()) })
+                        }.onFailure {
+                            kErrorState = ErrorState.TOPIC_ASSIGNMENT
+                            log.error { "Failure during topic partition(s) assignment for $topic - ${it.message}" }
                         }
-                        loop(pollstate.shouldContinue(), retries)
-                    }
+                    else
+                        this.runCatching {
+                            subscribe(listOf(topic))
+                        }.onFailure {
+                            kErrorState = ErrorState.TOPIC_ASSIGNMENT
+                            log.error { "Failure during subscription for $topic -  ${it.message}" }
+                        }
                 }
-                log.info { "Kafka consumer is ready to consume from topic $topic" }
-                loop(true)
-                log.info { "Closing KafkaConsumer, kErrorstate: $kErrorState" }
-                return exitOk
-            }
-    } catch (e: Exception) {
-        log.error { "Failure during kafka consumer construction - ${e.message}" }
-        false
+                .use { c ->
+                    if (fromBeginning) c.runCatching {
+                        c.seekToBeginning(emptyList())
+                    }.onFailure {
+                        log.error { "Failure during SeekToBeginning - ${it.message}" }
+                    }
+
+                    var exitOk = true
+
+                    tailrec fun loop(keepGoing: Boolean, retriesLeft: Int = 5): Unit = when {
+                        ShutdownHook.isActive() || PrestopHook.isActive() || !keepGoing -> (if (ShutdownHook.isActive() || PrestopHook.isActive()) { log.warn { "Kafka stopped consuming prematurely due to hook" }; Unit } else Unit)
+                        else -> {
+                            val pollstate = c.pollAndConsumption(pollDuration, retriesLeft > 0, doConsume)
+                            val retries = if (pollstate == Pollstate.RETRY) (retriesLeft - 1).coerceAtLeast(0) else 0
+                            if (pollstate == Pollstate.RETRY) {
+                                // We will retry poll in a minute
+                                log.info { "Kafka consumer - No records found on $topic, retry consumption in 60s. Retries left: $retries" }
+                                conditionalWait(60000)
+                            } else if (pollstate == Pollstate.FAILURE) {
+                                exitOk = false
+                            }
+                            loop(pollstate.shouldContinue(), retries)
+                        }
+                    }
+                    log.info { "Kafka consumer is ready to consume from topic $topic" }
+                    loop(true, if (hasCompletedAWorkSession) 0 else 5)
+                    log.info { "Closing KafkaConsumer, kErrorstate: $kErrorState" }
+                    return exitOk
+                }
+        } catch (e: Exception) {
+            log.error { "Failure during kafka consumer construction - ${e.message}" }
+            false
+        }
+
+    enum class Pollstate {
+        FAILURE, RETRY, OK, FINISHED
     }
 
-enum class Pollstate {
-    FAILURE, RETRY, OK, FINISHED
-}
-
-fun Pollstate.shouldContinue(): Boolean {
-    return this == Pollstate.RETRY || this == Pollstate.OK
-}
-
-private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, retryIfNoRecords: Boolean, doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Pollstate =
-    runCatching {
-        poll(Duration.ofMillis(pollDuration)) as ConsumerRecords<K, V>
+    fun Pollstate.shouldContinue(): Boolean {
+        return this == Pollstate.RETRY || this == Pollstate.OK
     }
+
+    private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, retryIfNoRecords: Boolean, doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Pollstate =
+        runCatching {
+            poll(Duration.ofMillis(pollDuration)) as ConsumerRecords<K, V>
+        }
             .onFailure {
                 log.error { "Failure during poll - ${it.message}, MsgHost: $currentConsumerMessageHost, Exception class name ${it.javaClass.name}\nMsgBoard: $kafkaConsumerOffsetRangeBoard \nGiven up on poll directly. Do not commit. Do not continue" }
                 if (it is org.apache.kafka.common.errors.AuthorizationException) {
@@ -199,17 +207,17 @@ private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, re
                 }
                 val consumerState = AKafkaConsumer.metrics.consumerLatency.startTimer().let { rt ->
                     runCatching { doConsume(cRecords) }
-                            .onFailure {
-                                log.error { "Failure during doConsume, MsgHost: $currentConsumerMessageHost - cause: ${it.cause}, message: ${it.message}. Stack: ${it.printStackTrace()}, Exception class name ${it.javaClass.name}\\" }
-                                if (it.message?.contains("failed to respond") == true || it.message?.contains("terminated the handshake") == true) {
-                                    kErrorState = ErrorState.SERVICE_UNAVAILABLE
-                                    kCommonMetrics.consumeErrorServiceUnavailable.inc()
-                                } else {
-                                    kErrorState = ErrorState.UNKNOWN_ERROR
-                                    kCommonMetrics.unknownErrorConsume.inc()
-                                }
+                        .onFailure {
+                            log.error { "Failure during doConsume, MsgHost: $currentConsumerMessageHost - cause: ${it.cause}, message: ${it.message}. Stack: ${it.printStackTrace()}, Exception class name ${it.javaClass.name}\\" }
+                            if (it.message?.contains("failed to respond") == true || it.message?.contains("terminated the handshake") == true) {
+                                kErrorState = ErrorState.SERVICE_UNAVAILABLE
+                                kCommonMetrics.consumeErrorServiceUnavailable.inc()
+                            } else {
+                                kErrorState = ErrorState.UNKNOWN_ERROR
+                                kCommonMetrics.unknownErrorConsume.inc()
                             }
-                            .getOrDefault(KafkaConsumerStates.HasIssues).also { rt.observeDuration() }
+                        }
+                        .getOrDefault(KafkaConsumerStates.HasIssues).also { rt.observeDuration() }
                 }
                 when (consumerState) {
                     KafkaConsumerStates.IsOk -> {
@@ -254,98 +262,6 @@ private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, re
                 }
             }
 
-// Reference Producer :
-/*
-class AKafkaProducer<K, V>(
-    val config: Map<String, Any>
-) {
-    fun produce(doProduce: KafkaProducer<K, V>.() -> Unit): Boolean = getKafkaProducerByConfig(config, doProduce)
-
-    companion object {
-
-        val configBase: Map<String, Any>
-            get() = mapOf<String, Any>(
-                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_BROKERS, KAFKA_LOCAL),
-                    ProducerConfig.CLIENT_ID_CONFIG to AnEnvironment.getEnvOrDefault(env_KAFKA_CLIENTID, PROGNAME),
-                    ProducerConfig.ACKS_CONFIG to "all",
-                    ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to AnEnvironment.getEnvOrDefault(EV_kafkaProducerTimeout, "31000").toInt(),
-                CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to SecurityProtocol.SSL,
-                SaslConfigs.SASL_MECHANISM to "PLAIN"
-            ).let { cMap ->
-                if (AnEnvironment.getEnvOrDefault(env_KAFKA_SECURITY, "false").toBoolean()) {
-                    cMap
-                            .addKafkaSecurityUser(
-                                    if (AnEnvironment.getEnvOrDefault(EV_VaultInstance) != VaultInstancePaths.GCP.name) {
-                                        AVault.getServiceUserOrDefault(VAULT_kafkaUser)
-                                    } else {
-                                        AnEnvironment.getEnvOrDefault(EV_kafkaUser, "Missing $EV_kafkaUser in nais.yaml")
-                                    },
-                                    if (AnEnvironment.getEnvOrDefault(EV_VaultInstance) != VaultInstancePaths.GCP.name) {
-                                        AVault.getServiceUserOrDefault(VAULT_kafkaPassword)
-                                    } else {
-                                        val srvUsername = AnEnvironment.getEnvOrDefault(EV_kafkaUser, "Missing $EV_kafkaUser in nais.yaml")
-                                        val srvPassword = AVault.getSecretOrDefault(srvUsername)
-                                        if (srvPassword.isNullOrEmpty()) {
-                                            log.error { "Password not set in GCP Secrets for key $srvUsername" }
-                                        }
-                                        srvPassword
-                                    }
-                            ).also { log.info { "Authenticate in context of ${AnEnvironment.getEnvOrDefault(EV_VaultInstance)}" } }
-                } else cMap
-            }
-    }
+    fun consume(handlePolledBatchOfRecords: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean =
+        consume(config, topic, pollDuration, fromBeginning, hasCompletedAWorkSession, handlePolledBatchOfRecords)
 }
-
-internal fun <K, V> getKafkaProducerByConfig(config: Map<String, Any>, doProduce: KafkaProducer<K, V>.() -> Unit): Boolean =
-        try {
-            KafkaProducer<K, V>(
-                    Properties().apply { config.forEach { set(it.key, it.value) } }
-            ).use {
-                it.runCatching { doProduce() }
-                        .onFailure { log.error { "Failure during doProduce - ${it.localizedMessage}" } }
-            }
-            true
-        } catch (e: Exception) {
-            log.error { "Failure during kafka producer construction - ${e.message}" }
-            false
-        }
-
-fun <K, V> KafkaProducer<K, V>.send(topic: String, key: K, value: V): Boolean = this.runCatching {
-    send(ProducerRecord(topic, key, value)).get().hasOffset()
-}
-        .getOrDefault(false)
-
-fun <K, V> KafkaProducer<K, V>.sendNullKey(topic: String, value: V): Boolean = this.runCatching {
-    send(ProducerRecord(topic, null, value)).get().hasOffset()
-}
-        .getOrDefault(false)
-
-fun <K, V> KafkaProducer<K, V>.sendNullValue(topic: String, key: K): Boolean = this.runCatching {
-    send(ProducerRecord(topic, key, null)).get().hasOffset()
-}
-
-        .getOrDefault(false)
-
-
- */
-
-// Reference kafka user fetch onprem:
-/*
-
-internal fun Map<String, Any>.addKafkaSecurityUser(
-    username: String,
-    password: String
-): Map<String, Any> = this.let {
-
-    val mMap = this.toMutableMap()
-
-    val jaasPainLogin = "org.apache.kafka.common.security.plain.PlainLoginModule"
-    val jaasRequired = "required"
-
-    mMap[SaslConfigs.SASL_JAAS_CONFIG] = "$jaasPainLogin $jaasRequired " +
-            "username=\"$username\" password=\"$password\";"
-
-    mMap.toMap()
-}
-
- */

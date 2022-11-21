@@ -5,8 +5,15 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import java.io.File
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.kCommonMetrics
-import no.nav.kafka.dialog.metrics.offsetMapsToText
+import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
 
+/**
+ * KafkaToSFPoster
+ * This class is responsible for handling a work session, ie polling and posting to salesforce until we are up-to-date with topic
+ * Make use of SalesforceClient to setup connection to salesforce
+ * Make use of AKafkaConsumer to perform polling and provides code for what how to process each capture batch
+ * (Returns KafkaConsumerStates.IsOk only when we are sure the data has been sent )
+ */
 class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifier: ((String, Long) -> String)? = null) {
     private val log = KotlinLogging.logger { }
 
@@ -14,7 +21,6 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
         DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
     }
     val sfClient = SalesforceClient()
-    var numberOfWorkSessionsWithoutEvents = 0
 
     val fromBeginning = settings.contains(Settings.FROM_BEGINNING)
     val noPost = settings.contains(Settings.NO_POST)
@@ -24,40 +30,43 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     val avroValue = settings.contains(Settings.AVRO_VALUE)
     val bytesAvroValue = settings.contains(Settings.BYTES_AVRO_VALUE)
 
-    var samples = 3
+    var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
-
     fun runWorkSession() {
         if (runOnce && hasRunOnce) {
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
             return
         }
-        var firstOffsetPosted: MutableMap<Int, Long> = mutableMapOf()
-        var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf()
+        var firstOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** First offset posted per kafka partition **/
+        var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
         val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (bytesAvroValue) AKafkaConsumer.configBytesAvro else AKafkaConsumer.configPlain
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
         val consumer = if (bytesAvroValue) {
-            AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLLDURATION), fromBeginning)
+            AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else {
-            AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLLDURATION), fromBeginning)
+            AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         }
 
+        /**
+         * Below used only for special case bytesAvroValue
+         */
         val deserializer = KafkaAvroDeserializer(registryClient)
         val kafkaAvroDeserializerConfig = kafkaConsumerConfig + mapOf<String, Any>(
             KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to "true",
             KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to env(env_KAFKA_SCHEMA_REGISTRY)
         )
         deserializer.configure(kafkaAvroDeserializerConfig, false)
+        /***/
 
         sfClient.enablesObjectPost { postActivities ->
             val isOk = consumer.consume { cRecords ->
                 hasRunOnce = true
                 if (cRecords.isEmpty) {
                     if (consumedInCurrentRun == 0) {
-                        log.info { "Work: Finished session without consuming" }
+                        log.info { "Work: Finished session without consuming. Number if work sessions without event during lifetime of app: $numberOfWorkSessionsWithoutEvents" }
                     } else {
                         log.info { "Work: Finished session with activity. $consumedInCurrentRun consumed records, posted offset range: ${offsetMapsToText(firstOffsetPosted, lastOffsetPosted)}" }
                     }
@@ -65,6 +74,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                 } else {
                     numberOfWorkSessionsWithoutEvents = 0
                     kCommonMetrics.noOfConsumedEvents.inc(cRecords.count().toDouble())
+                    consumedInCurrentRun += cRecords.count()
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {
                             if (bytesAvroValue) {
@@ -86,7 +96,9 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                             )
                         }
                     ).toJson()
-                    if (!noPost) {
+                    if (noPost) {
+                        KafkaConsumerStates.IsOk
+                    } else {
                         when (postActivities(body).isSuccess()) {
                             true -> {
                                 kCommonMetrics.noOfPostedEvents.inc(cRecords.count().toDouble())
@@ -102,13 +114,13 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                             }
                         }
                     }
-                    consumedInCurrentRun += cRecords.count()
-                    KafkaConsumerStates.IsOk
                 }
             }
             if (!isOk) {
+                // Consumer issues is expected due to rotation of credentials, relocating app by kubernetes etc and is not critical.
+                // As long as we do not commit offset until we sent the data it will be sent at next attempt
                 kCommonMetrics.consumerIssues.inc()
-                log.warn { "Consumer in PlainKafkaToSFPoster reports NOK" }
+                log.warn { "Kafka consumer reports NOK" }
             }
         }
         if (consumedInCurrentRun == 0) numberOfWorkSessionsWithoutEvents++

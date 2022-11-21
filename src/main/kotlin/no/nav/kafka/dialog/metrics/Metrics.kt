@@ -80,6 +80,7 @@ val kCommonMetrics = KCommonMetrics()
 var kErrorState = ErrorState.NONE
 var currentConsumerMessageHost = "DEFAULT"
 var kafkaConsumerOffsetRangeBoard: MutableMap<String, Pair<Long, Long>> = mutableMapOf()
+var numberOfWorkSessionsWithoutEvents = 0
 
 const val POSTFIX_FAIL = "-FAIL"
 const val POSTFIX_FIRST = "-FIRST"
@@ -88,11 +89,4 @@ const val POSTFIX_LATEST = "-LATEST"
 enum class ErrorState() {
     NONE, UNKNOWN_ERROR, AUTHORIZATION, AUTHENTICATION, DESERIALIZATION, TIME_BETWEEN_POLLS,
     SERVICE_UNAVAILABLE, TOPIC_ASSIGNMENT
-}
-
-fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<Int, Long>): String {
-    if (firstOffset.isEmpty()) return "NONE"
-    return firstOffset.keys.sorted().map {
-        "$it:[${firstOffset[it]}-${lastOffset[it]}]"
-    }.joinToString(",")
 }
