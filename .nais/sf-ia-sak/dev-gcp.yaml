@@ -27,34 +27,35 @@ spec:
   resources:
     limits:
       cpu: 1000m
-      memory: 1024Mi
+      memory: 4096Mi
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 2048Mi
   accessPolicy:
     outbound:
       external:
-        - host: login.salesforce.com
-        - host: navdialog.my.salesforce.com
+        - host: test.salesforce.com
+        - host: navdialog--preprod.my.salesforce.com
+        - host: navdialog--uat.my.salesforce.com
   envFrom:
-    - secret: sf-arbeidsgiver-kontaktskjema
+    - secret: sf-ia-sak
   filesFrom:
-    - secret: sf-arbeidsgiver-kontaktskjema
+    - secret: sf-ia-sak
   kafka:
-    pool: nav-prod # enum of nav-dev, nav-prod
+    pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
-      value: DEFAULT
+      value: NO_POST
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
-      value: sf-arbeidsgiver-kontaktskjema
+      value: sf-ia-sak-v1
     - name: KAFKA_TOPIC
-      value: team-innhold.arbeidsgiver-kontaktskjema
+      value: pia.ia-sak-v1
     - name: MS_BETWEEN_WORK
-      value: '300000'
+      value: '600000'
     - name: SF_TOKENHOST
-      value: https://login.salesforce.com
+      value: https://test.salesforce.com
     - name: SF_VERSION
       value: 'v48.0'
     - name: DEPLOY_APP
