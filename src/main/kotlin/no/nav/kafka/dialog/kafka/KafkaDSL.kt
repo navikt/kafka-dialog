@@ -98,7 +98,7 @@ open class AKafkaConsumer<K, V>(
             )
 
         val configBytesAvro: Map<String, Any>
-            get() = configAvro + mapOf<String, Any>(
+            get() = configBase + mapOf<String, Any>(
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ByteArrayDeserializer::class.java
             )
