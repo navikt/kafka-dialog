@@ -92,6 +92,24 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
     }.joinToString(",")
 }
 
+fun truncateAdtext(input: String, offset: Long): String {
+    val f = input.indexOf("{\"key\": \"adtext\"")
+    if (f != -1) {
+        val propBefore = input.indexOf(", {\"key\": \"adtext\"") != -1
+        val n = input.indexOf("{\"key\": ", f + 10)
+        if (n == -1) {
+            val n2 = input.indexOf("}]", f + 10)
+            if (n2 == -1) {
+                File("/tmp/logposfail").appendText("OFFSET $offset\n${input}\n\n")
+                throw RuntimeException("Unable to parse adtext end for truncation")
+            }
+            return "${input.substring(0, if (propBefore) (f - 2) else f)}${input.substring(n2 + 1)}"
+        }
+        return "${input.substring(0, f)}${input.substring(n)}"
+    }
+    return input
+}
+
 /**
  * Shortcuts for fetching environment variables
  */
