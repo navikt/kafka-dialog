@@ -44,7 +44,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
-        val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (bytesAvroValue) AKafkaConsumer.configBytesAvro else AKafkaConsumer.configPlain
+        val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (bytesAvroValue) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
         val consumer = if (bytesAvroValue) {
