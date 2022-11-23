@@ -137,7 +137,7 @@ class SalesforceClient(
     private val retryDelay: Long = 1_500,
     transferAT: SFAccessToken = SFAccessToken.Missing
 ) {
-    val SF_PATH_sObject = lazy { "/services/data/${env(env_SF_VERSION)}/composite/sobjects" }
+    val SF_PATH_sObject = lazy { "/services/data/$SALESFORCE_VERSION/composite/sobjects" }
 
     private val claim: JWTClaimBase.Exists
         get() = JWTClaimBase.Exists(
