@@ -47,6 +47,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
         val consumer = if (bytesAvroValue) {
+            log.info { " Special case bytes Avro - instantiate bytearray value for consumer" }
             AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else {
             AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
@@ -80,7 +81,9 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {
                             if (bytesAvroValue) {
+                                log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
+                                log.info { "Special case bytes Avro - SAMPLE - made a sample" }
                             } else {
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                             }
