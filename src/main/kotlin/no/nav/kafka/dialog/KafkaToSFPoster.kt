@@ -4,7 +4,6 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import java.io.File
 import mu.KotlinLogging
-import no.nav.kafka.dialog.metrics.clearWorkSessionMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
 import org.apache.avro.generic.GenericRecord
@@ -39,7 +38,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
             return
         }
-        kCommonMetrics.clearWorkSessionMetrics()
+        // kCommonMetrics.clearWorkSessionMetrics()
         var firstOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** First offset posted per kafka partition **/
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
