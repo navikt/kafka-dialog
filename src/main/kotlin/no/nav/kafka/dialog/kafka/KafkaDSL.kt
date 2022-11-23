@@ -24,7 +24,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
-import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 
 private val log = KotlinLogging.logger {}
@@ -100,7 +99,12 @@ open class AKafkaConsumer<K, V>(
         val configBytesAvro: Map<String, Any>
             get() = configBase + mapOf<String, Any>(
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ByteArrayDeserializer::class.java
+                // ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ByteArrayDeserializer::class.java
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
+                KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to env(env_KAFKA_SCHEMA_REGISTRY),
+                KafkaAvroDeserializerConfig.USER_INFO_CONFIG to "${env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}",
+                KafkaAvroDeserializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
+                KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
             )
     }
 

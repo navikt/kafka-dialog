@@ -7,6 +7,7 @@ import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.clearWorkSessionMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
+import org.apache.avro.generic.GenericRecord
 
 /**
  * KafkaToSFPoster
@@ -48,7 +49,8 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
 
         val consumer = if (bytesAvroValue) {
             log.info { " Special case bytes Avro - instantiate bytearray value for consumer" }
-            AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+            // AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+            AKafkaConsumer<K, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else {
             AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         }
@@ -81,8 +83,9 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {
                             if (bytesAvroValue) {
-                                log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
-                                File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
+                                // log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
+                                // File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
+                                File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                                 log.info { "Special case bytes Avro - SAMPLE - made a sample" }
                             } else {
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
@@ -96,7 +99,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                             KafkaMessage(
                                 CRM_Topic__c = it.topic(),
                                 CRM_Key__c = if (encodeKey) it.key().toString().encodeB64() else it.key().toString(),
-                                CRM_Value__c = (if (bytesAvroValue) (deserializer.deserialize(it.topic(), it.value() as ByteArray) as V).toString() else it.value())
+                                CRM_Value__c = /*(if (bytesAvroValue) (deserializer.deserialize(it.topic(), it.value() as ByteArray) as V).toString() else */ it.value().toString()
                                     .let { value -> if (modifier == null) value.toString().encodeB64() else modifier.invoke(value.toString(), it.offset()).encodeB64() }
                             )
                         }
