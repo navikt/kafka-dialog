@@ -86,7 +86,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                                 // log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
                                 // File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
-                                log.info { "Special case bytes Avro - SAMPLE - made a sample" }
+                                log.info { "Special case bytes Avro - SAMPLE - made a sample ${it.value()}" }
                             } else {
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                             }
