@@ -45,8 +45,8 @@ spec:
   kafka:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
-    - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
-      value: NO_POST, FROM_BEGINNING, SAMPLE, ENCODE_KEY, BYTES_AVRO_VALUE
+    - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, AVRO_VALUE_ONLY
+      value: NO_POST, FROM_BEGINNING, SAMPLE, ENCODE_KEY, AVRO_VALUE_ONLY
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
@@ -57,7 +57,5 @@ spec:
       value: '240000'
     - name: SF_TOKENHOST
       value: https://test.salesforce.com
-    - name: SF_VERSION
-      value: 'v48.0'
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}

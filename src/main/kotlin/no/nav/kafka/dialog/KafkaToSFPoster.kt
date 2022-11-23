@@ -20,7 +20,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     private val log = KotlinLogging.logger { }
 
     enum class Settings {
-        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, BYTES_AVRO_VALUE
+        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, AVRO_VALUE_ONLY
     }
     val sfClient = SalesforceClient()
 
@@ -30,7 +30,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     var runOnce = settings.contains(Settings.RUN_ONCE)
     val encodeKey = settings.contains(Settings.ENCODE_KEY)
     val avroValue = settings.contains(Settings.AVRO_VALUE)
-    val bytesAvroValue = settings.contains(Settings.BYTES_AVRO_VALUE)
+    val bytesAvroValue = settings.contains(Settings.AVRO_VALUE_ONLY)
 
     var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
