@@ -30,7 +30,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     var runOnce = settings.contains(Settings.RUN_ONCE)
     val encodeKey = settings.contains(Settings.ENCODE_KEY)
     val avroValue = settings.contains(Settings.AVRO_VALUE)
-    val bytesAvroValue = settings.contains(Settings.AVRO_VALUE_ONLY)
+    val avroValueOnly = settings.contains(Settings.AVRO_VALUE_ONLY)
 
     var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
@@ -44,11 +44,11 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
-        val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (bytesAvroValue) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
+        val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (avroValueOnly) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
-        val consumer = if (bytesAvroValue) {
-            log.info { " Special case bytes Avro - instantiate bytearray value for consumer" }
+        val consumer = if (avroValueOnly) {
+            log.info { " Special case bytes Avro - instantiate GenericRecord" }
             // AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
             AKafkaConsumer<K, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else {
@@ -82,7 +82,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     consumedInCurrentRun += cRecords.count()
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {
-                            if (bytesAvroValue) {
+                            if (avroValueOnly) {
                                 // log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
                                 // File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
