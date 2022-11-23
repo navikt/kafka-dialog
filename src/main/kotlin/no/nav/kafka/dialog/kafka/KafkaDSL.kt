@@ -93,7 +93,7 @@ open class AKafkaConsumer<K, V>(
                 KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to env(env_KAFKA_SCHEMA_REGISTRY),
                 KafkaAvroDeserializerConfig.USER_INFO_CONFIG to "${env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}",
                 KafkaAvroDeserializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
-                KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to true
+                KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
             )
 
         val configAvroValueOnly: Map<String, Any>
