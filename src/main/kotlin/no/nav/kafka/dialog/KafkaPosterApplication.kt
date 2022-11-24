@@ -16,7 +16,7 @@ class KafkaPosterApplication<K, V>(val settings: List<KafkaToSFPoster.Settings> 
 
     private val log = KotlinLogging.logger { }
     fun start() {
-        log.info { "Starting app ${env(env_DEPLOY_APP)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
+        log.info { "Starting app ${env(env_DEPLOY_APP)} cluster ${env(env_DEPLOY_CLUSTER)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
             loop()
         }

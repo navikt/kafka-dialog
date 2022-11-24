@@ -1,6 +1,7 @@
 package no.nav.kafka.dialog
 
 const val env_DEPLOY_APP = "DEPLOY_APP"
+const val env_DEPLOY_CLUSTER = "DEPLOY_CLUSTER"
 const val env_POSTER_SETTINGS = "POSTER_SETTINGS"
 
 const val env_MS_BETWEEN_WORK = "MS_BETWEEN_WORK"
