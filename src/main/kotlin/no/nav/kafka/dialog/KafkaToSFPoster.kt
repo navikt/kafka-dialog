@@ -88,6 +88,8 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                                 log.info { "Special case bytes Avro - SAMPLE - made a sample" }
                             } else {
+                                log.info { "Samples" }
+                                log.info { "KEY: ${it.key()}" }
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                             }
                             samples--
