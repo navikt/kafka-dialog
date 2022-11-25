@@ -8,4 +8,4 @@ jobs:
     secrets: inherit
     with:
       DEPLOY_APP: sf-dialogmote
-      DEPLOY_CLUSTER: dev-gcp
+      DEPLOY_CLUSTER: prod-gcp

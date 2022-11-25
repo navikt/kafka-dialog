@@ -83,7 +83,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                         cRecords.forEach { if (samples > 0) {
                             File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                             if (modifier != null) {
-                                File("/tmp/samplesAfterModifier").appendText("KEY: ${it.key()}\nVALUE: ${modifier.invoke(it.value().toString(), it.offset())}")
+                                File("/tmp/samplesAfterModifier").appendText("KEY: ${it.key()}\nVALUE: ${modifier.invoke(it.value().toString(), it.offset())}\n\n")
                             }
                             samples--
                             log.info { "Saved sample. Samples left: $samples" }
