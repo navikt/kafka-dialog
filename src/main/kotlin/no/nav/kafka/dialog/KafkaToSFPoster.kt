@@ -19,7 +19,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     private val log = KotlinLogging.logger { }
 
     enum class Settings {
-        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_VALUE, AVRO_VALUE_ONLY
+        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
     }
     val sfClient = SalesforceClient()
 
@@ -28,8 +28,8 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
     val sample = settings.contains(Settings.SAMPLE)
     var runOnce = settings.contains(Settings.RUN_ONCE)
     val encodeKey = settings.contains(Settings.ENCODE_KEY)
+    val avroKeyValue = settings.contains(Settings.AVRO_KEY_VALUE)
     val avroValue = settings.contains(Settings.AVRO_VALUE)
-    val avroValueOnly = settings.contains(Settings.AVRO_VALUE_ONLY)
 
     var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
@@ -43,12 +43,12 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
-        val kafkaConsumerConfig = if (avroValue) AKafkaConsumer.configAvro else if (avroValueOnly) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
+        val kafkaConsumerConfig = if (avroKeyValue) AKafkaConsumer.configAvro else if (avroValue) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
-        val consumer = if (avroValueOnly) {
-            log.info { " Special case bytes Avro - instantiate GenericRecord" }
-            // AKafkaConsumer<K, ByteArray>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+        val consumer = if (avroKeyValue) {
+            AKafkaConsumer<GenericRecord, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+        } else if (avroValue) {
             AKafkaConsumer<K, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else {
             AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
@@ -81,7 +81,7 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     consumedInCurrentRun += cRecords.count()
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {
-                            if (avroValueOnly) {
+                            if (avroValue) {
                                 // log.info { "Special case bytes Avro - SAMPLE - deserialize from bytearray to object as provided Ad" }
                                 // File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${(deserializer.deserialize(it.topic(), it.value() as ByteArray) as V)}\n\n")
                                 File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")

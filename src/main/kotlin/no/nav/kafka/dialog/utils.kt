@@ -1,9 +1,13 @@
 package no.nav.kafka.dialog
 
 import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.google.gson.JsonPrimitive
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
+import java.time.Instant
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -108,6 +112,24 @@ fun truncateAdtext(input: String, offset: Long): String {
         return "${input.substring(0, f)}${input.substring(n)}"
     }
     return input
+}
+
+// Note: Only replaces numbers on first level of json (not nested values):
+fun replaceNumbersWithInstants(input: String, offset: Long): String {
+    try {
+        val obj = JsonParser.parseString(input) as JsonObject
+        obj.keySet().forEach {
+            if (obj[it].isJsonPrimitive) {
+                if ((obj[it] as JsonPrimitive).isNumber) {
+                    obj.addProperty(it, Instant.ofEpochMilli(obj.get(it).asLong).toString())
+                }
+            }
+        }
+        return obj.toString()
+    } catch (e: Exception) {
+        File("/tmp/replacewithinstantsfail").appendText("OFFSET $offset\n${input}\n\n")
+        throw RuntimeException("Unable to replace longs to instants in modifier")
+    }
 }
 
 /**
