@@ -114,6 +114,21 @@ fun truncateAdtext(input: String, offset: Long): String {
     return input
 }
 
+fun removeAdTextProperty(input: String, offset: Long): String {
+    try {
+        val obj = JsonParser.parseString(input) as JsonObject
+        if (obj.has("properties")) {
+            val array = obj["properties"].asJsonArray
+            array.removeAll { (it as JsonObject)["key"].asString == "adtext" }
+            obj.add("properties", array)
+        }
+        return obj.toString()
+    } catch (e: Exception) {
+        File("/tmp/removepropertyfail").appendText("OFFSET $offset\n${input}\n\n")
+        throw RuntimeException("Unable to parse event to remove adtext property")
+    }
+}
+
 // Note: Only replaces numbers on first level of json (not nested values):
 fun replaceNumbersWithInstants(input: String, offset: Long): String {
     try {
