@@ -1,7 +1,5 @@
 package no.nav.kafka.dialog
 
-import io.confluent.kafka.serializers.KafkaAvroDeserializer
-import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
 import java.io.File
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.kCommonMetrics
@@ -15,7 +13,11 @@ import org.apache.avro.generic.GenericRecord
  * Makes use of AKafkaConsumer to perform polling. This class provides code for how to process each capture batch
  * (Returns KafkaConsumerStates.IsOk only when we are sure the data has been sent )
  */
-class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifier: ((String, Long) -> String)? = null) {
+class KafkaToSFPoster<K, V>(
+    val settings: List<Settings> = listOf(),
+    val modifier: ((String, Long) -> String)? = null,
+    val filter: ((String, Long) -> Boolean)? = null
+) {
     private val log = KotlinLogging.logger { }
 
     enum class Settings {
@@ -54,21 +56,10 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
             AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         }
 
-        /**
-         * Below used only for special case bytesAvroValue
-         */
-        val deserializer = KafkaAvroDeserializer(registryClient)
-        val kafkaAvroDeserializerConfig = kafkaConsumerConfig + mapOf<String, Any>(
-            KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to "true",
-            KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to env(env_KAFKA_SCHEMA_REGISTRY)
-        )
-        deserializer.configure(kafkaAvroDeserializerConfig, false)
-        /***/
-
         sfClient.enablesObjectPost { postActivities ->
-            val isOk = consumer.consume { cRecords ->
+            val isOk = consumer.consume { cRecordsPreFilter ->
                 hasRunOnce = true
-                if (cRecords.isEmpty) {
+                if (cRecordsPreFilter.isEmpty) {
                     if (consumedInCurrentRun == 0) {
                         log.info { "Work: Finished session without consuming. Number if work sessions without event during lifetime of app: $numberOfWorkSessionsWithoutEvents" }
                     } else {
@@ -77,7 +68,9 @@ class KafkaToSFPoster<K, V>(val settings: List<Settings> = listOf(), val modifie
                     KafkaConsumerStates.IsFinished
                 } else {
                     numberOfWorkSessionsWithoutEvents = 0
-                    kCommonMetrics.noOfConsumedEvents.inc(cRecords.count().toDouble())
+                    kCommonMetrics.noOfConsumedEvents.inc(cRecordsPreFilter.count().toDouble())
+                    val cRecords = if (filter == null) cRecordsPreFilter else cRecordsPreFilter.filter { filter!!(it.value().toString(), it.offset()) }
+                    kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - cRecords.count()).toDouble())
                     consumedInCurrentRun += cRecords.count()
                     if (sample && samples > 0) {
                         cRecords.forEach { if (samples > 0) {

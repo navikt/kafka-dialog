@@ -70,6 +70,7 @@ data class KCommonMetrics(
     val unknownErrorPoll: Gauge = Metrics.registerGauge("unknownErrorPoll"),
     val unknownErrorCommit: Gauge = Metrics.registerGauge("unknownErrorCommit"),
     val noOfConsumedEvents: Gauge = Metrics.registerGauge("kafka_consumed_event_gauge"),
+    val noOfEventsBlockedByFilter: Gauge = Metrics.registerGauge("kafka_blocked_by_filter_gauge"),
     val noOfPostedEvents: Gauge = Metrics.registerGauge("sf_posted_event_gauge"),
     val producerIssues: Gauge = Metrics.registerGauge("producer_issues"),
     val consumerIssues: Gauge = Metrics.registerGauge("consumer_issues"),
