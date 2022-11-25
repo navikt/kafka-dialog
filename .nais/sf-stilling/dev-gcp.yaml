@@ -46,7 +46,7 @@ spec:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: NO_POST, FROM_BEGINNING, SAMPLE, ENCODE_KEY, AVRO_VALUE_ONLY
+      value: NO_POST, FROM_BEGINNING, SAMPLE, ENCODE_KEY, AVRO_VALUE
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
