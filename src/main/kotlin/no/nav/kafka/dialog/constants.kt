@@ -36,5 +36,5 @@ const val secret_KeystorePassword = "KeystorePassword"
 const val secret_PrivateKeyAlias = "PrivateKeyAlias"
 const val secret_PrivateKeyPassword = "PrivateKeyPassword"
 
-const val numberOfSamplesInSampleRun = 3
+const val numberOfSamplesInSampleRun = 1000
 const val SALESFORCE_VERSION = "v56.0"
