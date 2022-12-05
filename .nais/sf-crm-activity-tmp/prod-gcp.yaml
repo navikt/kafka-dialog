@@ -48,9 +48,9 @@ spec:
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
-      value: crm-kafka-activity-events
+      value: crm-kafka-activity-oppgaver
     - name: KAFKA_TOPIC
-      value: team-dialog.crm-kafka-activity-events
+      value: team-dialog.crm-kafka-activity-oppgaver
     - name: MS_BETWEEN_WORK
       value: '600000'
     - name: SF_TOKENHOST
