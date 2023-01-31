@@ -34,27 +34,28 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: login.salesforce.com
-        - host: navdialog.my.salesforce.com
+        - host: test.salesforce.com
+        - host: navdialog--preprod.my.salesforce.com
+        - host: navdialog--uat.my.salesforce.com
   envFrom:
     - secret: sf-ia-sak
   filesFrom:
     - secret: sf-ia-sak
   kafka:
-    pool: nav-prod # enum of nav-dev, nav-prod
+    pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE
+      value: SAMPLE
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
-      value: crm-kafka-activity-oppgaver
+      value: crm-kafka-activity-events
     - name: KAFKA_TOPIC
-      value: team-dialog.crm-kafka-activity-oppgaver
+      value: team-dialog.crm-kafka-activity-events
     - name: MS_BETWEEN_WORK
       value: '600000'
     - name: SF_TOKENHOST
-      value: https://login.salesforce.com
+      value: https://test.salesforce.com
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER
