@@ -1,7 +1,6 @@
 package no.nav.kafka.dialog
 
 import mu.KotlinLogging
-
 /**
  * KafkaPosterApplication
  * This is the top level of the integration. Its function is to setup a server with the required
@@ -13,13 +12,13 @@ class KafkaPosterApplication<K, V>(
     val settings: List<KafkaToSFPoster.Settings> = listOf(),
     modifier: ((String, Long) -> String)? = null,
     filter: ((String, Long) -> Boolean)? = null
-) {
+) : App {
     val poster = KafkaToSFPoster<K, V>(settings, modifier, filter)
 
     private val bootstrapWaitTime = envAsLong(env_MS_BETWEEN_WORK)
 
     private val log = KotlinLogging.logger { }
-    fun start() {
+    override fun start() {
         log.info { "Starting app ${env(env_DEPLOY_APP)} - cluster ${env(env_DEPLOY_CLUSTER)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
             loop()

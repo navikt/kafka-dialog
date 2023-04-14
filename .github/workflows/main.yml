@@ -7,5 +7,5 @@ jobs:
     uses: ./.github/workflows/workflow.yml
     secrets: inherit
     with:
-      DEPLOY_APP: sf-crm-activity-oppgaver
-      DEPLOY_CLUSTER: prod-gcp
+      DEPLOY_APP: sf-arbeidsgiveraktivitet
+      DEPLOY_CLUSTER: prod-fss
