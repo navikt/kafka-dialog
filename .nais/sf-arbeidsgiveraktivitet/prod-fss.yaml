@@ -35,10 +35,10 @@ spec:
       external:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
-  #  envFrom:
-  #    - secret: sf-dialogmote
-  #  filesFrom:
-  #    - secret: sf-dialogmote
+    envFrom:
+      - secret: sf-dialog
+    filesFrom:
+      - secret: sf-dialog
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
@@ -49,7 +49,7 @@ spec:
     - name: KAFKA_CLIENTID
       value: {{ DEPLOY_APP }}
     - name: KAFKA_TOPIC
-      value: arena-topic-coming-soon
+      value: teamarenanais.aapen-arena-arbeidsgiveraktivitetendret-v1
     - name: MS_BETWEEN_WORK
       value: '600000'
     - name: SF_TOKENHOST

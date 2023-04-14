@@ -10,7 +10,7 @@ on:
         required: true
         type: string
 env:
-  IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog-${{ inputs.DEPLOY_APP }}:${{ github.sha }}
+  IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
   test:
     name: ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }} - Run tests

@@ -38,9 +38,9 @@ spec:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-permiteringsvarsel
+    - secret: sf-dialog
   filesFrom:
-    - secret: sf-permiteringsvarsel
+    - secret: sf-dialog
   kafka:
     pool: nav-prod
   env:

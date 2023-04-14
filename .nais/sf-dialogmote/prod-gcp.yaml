@@ -37,9 +37,9 @@ spec:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-dialogmote
+    - secret: sf-dialog
   filesFrom:
-    - secret: sf-dialogmote
+    - secret: sf-dialog
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
