@@ -10,7 +10,7 @@ on:
         required: true
         type: string
 env:
-  IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
+  IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog-${{ inputs.DEPLOY_APP }}:${{ github.sha }}
 jobs:
   test:
     name: ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }} - Run tests
@@ -85,4 +85,4 @@ jobs:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
           RESOURCE: .nais/${{ inputs.DEPLOY_APP }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ env.IMAGE}},DEPLOY_APP=${{ inputs.DEPLOY_APP}},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER}}
+          VAR: image=${{ env.IMAGE }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}

@@ -47,7 +47,7 @@ spec:
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
-      value: { { DEPLOY_APP } }
+      value: {{ DEPLOY_APP }}
     - name: KAFKA_TOPIC
       value: arena-topic-coming-soon
     - name: MS_BETWEEN_WORK
@@ -55,6 +55,6 @@ spec:
     - name: SF_TOKENHOST
       value: https://login.salesforce.com
     - name: DEPLOY_APP
-      value: { { DEPLOY_APP } }
+      value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER
-      value: { { DEPLOY_CLUSTER } }
+      value: {{ DEPLOY_CLUSTER }}
