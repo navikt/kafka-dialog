@@ -56,7 +56,7 @@ spec:
     - name: SF_TOKENHOST
       value: https://test.salesforce.com
     - name: ARENA_HOST
-      value: 'https://arena-ords-readonly-q1.nais.preprod.local'
+      value: 'https://arena-ords-q1.dev.intern.nav.no'
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER
