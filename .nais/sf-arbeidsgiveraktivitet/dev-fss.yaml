@@ -33,8 +33,8 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: login.salesforce.com
-        - host: navdialog.my.salesforce.com
+        - host: test.salesforce.com
+        - host: navdialog--preprod.my.salesforce.com
   envFrom:
     - secret: sf-dialog
   filesFrom:
@@ -51,9 +51,9 @@ spec:
     - name: KAFKA_TOPIC
       value: teamarenanais.aapen-arena-arbeidsgiveraktivitetendret-v1
     - name: MS_BETWEEN_WORK
-      value: '600000' # 10 min
+      value: '600000'
     - name: SF_TOKENHOST
-      value: https://login.salesforce.com
+      value: https://test.salesforce.com
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER
