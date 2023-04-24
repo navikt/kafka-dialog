@@ -52,7 +52,7 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
     }
 }
 
-val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient.supportProxy(env(env_HTTPS_PROXY)) }
+val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
 
 fun lookUpArenaActivityDetails(input: String, offset: Long): String {
     try {
