@@ -16,8 +16,8 @@ class ArenaTestApplication : App {
     override fun start() {
         log.info { "Starting arena test app ${env(env_DEPLOY_APP)} - cluster ${env(env_DEPLOY_CLUSTER)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
-            // val uri = "https://arena-ords.nais.adeo.no/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=140141879"
-            val uri = "https://arena-ords-readonly-q1.nais.preprod.local/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=140141879"
+            val uri = "https://arena-ords.nais.adeo.no/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=140141879"
+            // val uri = "https://arena-ords-readonly-q1.nais.preprod.local/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=140141879"
             val request = Request(Method.GET, uri)
             val response = client(request)
             log.info { "Response gotten" }
