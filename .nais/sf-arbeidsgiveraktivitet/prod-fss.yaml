@@ -55,6 +55,8 @@ spec:
       value: '600000' # 10 min
     - name: SF_TOKENHOST
       value: https://login.salesforce.com
+    - name: ARENA_HOST
+      value: 'https://arena-ords.nais.adeo.no'
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER

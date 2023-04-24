@@ -69,25 +69,28 @@ class KafkaToSFPoster<K, V>(
                 } else {
                     numberOfWorkSessionsWithoutEvents = 0
                     kCommonMetrics.noOfConsumedEvents.inc(cRecordsPreFilter.count().toDouble())
-                    val cRecords = if (filter == null) cRecordsPreFilter else cRecordsPreFilter.filter { filter!!(it.value().toString(), it.offset()) }
-                    kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - cRecords.count()).toDouble())
-                    consumedInCurrentRun += cRecords.count()
+
+                    val kafkaData = cRecordsPreFilter.map {
+                        KafkaData(topic = it.topic(), offset = it.offset(), partition = it.partition(), key = it.key().toString(),
+                            value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()), originValue = it.value().toString())
+                    }.filter { filter == null || filter!!(it.value, it.offset) }.toList()
+
+                    kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - kafkaData.size).toDouble())
+                    consumedInCurrentRun += kafkaData.size
                     if (sample && samples > 0) {
-                        cRecords.forEach { if (samples > 0) {
-                            File("/tmp/samples").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
-                            if (modifier != null) {
-                                File("/tmp/samplesAfterModifier").appendText("KEY: ${it.key()}\nVALUE: ${modifier.invoke(it.value().toString(), it.offset())}\n\n")
-                            }
+                        kafkaData.forEach { if (samples > 0) {
+                            File("/tmp/samples").appendText("KEY: ${it.key}\nVALUE: ${it.value}" +
+                                    (if (modifier != null) "\nORIGIN VALUE: ${it.originValue}" else "") + "\n\n")
                             samples--
                             log.info { "Saved sample. Samples left: $samples" }
                         } }
                     }
                     val body = SFsObjectRest(
-                        records = cRecords.map {
+                        records = kafkaData.map {
                             KafkaMessage(
-                                CRM_Topic__c = it.topic(),
-                                CRM_Key__c = if (encodeKey) it.key().toString().encodeB64() else it.key().toString(),
-                                CRM_Value__c = it.value().toString().let { value -> if (modifier == null) value.toString().encodeB64() else modifier.invoke(value.toString(), it.offset()).encodeB64() }
+                                CRM_Topic__c = it.topic,
+                                CRM_Key__c = if (encodeKey) it.key.encodeB64() else it.key,
+                                CRM_Value__c = it.value.encodeB64()
                             )
                         }
                     ).toJson()
@@ -96,10 +99,10 @@ class KafkaToSFPoster<K, V>(
                     } else {
                         when (postActivities(body).isSuccess()) {
                             true -> {
-                                kCommonMetrics.noOfPostedEvents.inc(cRecords.count().toDouble())
-                                if (!firstOffsetPosted.containsKey(cRecords.first().partition())) firstOffsetPosted[cRecords.first().partition()] = cRecords.first().offset()
-                                lastOffsetPosted[cRecords.last().partition()] = cRecords.last().offset()
-                                cRecords.forEach { kCommonMetrics.latestPostedOffset.labels(it.partition().toString()).set(it.offset().toDouble()) }
+                                kCommonMetrics.noOfPostedEvents.inc(kafkaData.size.toDouble())
+                                if (!firstOffsetPosted.containsKey(kafkaData.first().partition)) firstOffsetPosted[kafkaData.first().partition] = kafkaData.first().offset
+                                lastOffsetPosted[kafkaData.last().partition] = kafkaData.last().offset
+                                kafkaData.forEach { kCommonMetrics.latestPostedOffset.labels(it.partition.toString()).set(it.offset.toDouble()) }
                                 KafkaConsumerStates.IsOk
                             }
                             false -> {

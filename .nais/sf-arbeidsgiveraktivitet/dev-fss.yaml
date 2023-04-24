@@ -44,7 +44,7 @@ spec:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: SAMPLE, NO_POST
+      value: SAMPLE, NO_POST, FROM_BEGINNING
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
@@ -55,6 +55,8 @@ spec:
       value: '600000'
     - name: SF_TOKENHOST
       value: https://test.salesforce.com
+    - name: ARENA_HOST
+      value: 'https://arena-ords-readonly-q1.nais.preprod.local'
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
     - name: DEPLOY_CLUSTER

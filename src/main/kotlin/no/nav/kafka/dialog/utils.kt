@@ -95,6 +95,11 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
 }
 
 /**
+ * Representation of Kafka data used for modifiers and filter, final state for salesforce format is found in SalesforceDSL KafkaMessage
+ */
+data class KafkaData(val topic: String, val offset: Long, val partition: Int, val key: String, val value: String, val originValue: String)
+
+/**
  * Shortcuts for fetching environment variables
  */
 fun env(env: String): String { return System.getenv(env) }
