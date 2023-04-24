@@ -19,7 +19,7 @@ class KafkaPosterApplication<K, V>(
 
     private val log = KotlinLogging.logger { }
     override fun start() {
-        log.info { "Starting app ${env(env_DEPLOY_APP)} - cluster ${env(env_DEPLOY_CLUSTER)} with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
+        log.info { "Starting app ${env(env_DEPLOY_APP)} - cluster ${env(env_DEPLOY_CLUSTER)} (${if (isOnPrem) "Onprem" else "Gcp"}) with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
             loop()
         }

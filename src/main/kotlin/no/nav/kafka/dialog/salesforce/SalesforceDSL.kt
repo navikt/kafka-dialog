@@ -127,7 +127,7 @@ sealed class SFAccessToken {
 }
 
 class SalesforceClient(
-    private val httpClient: Lazy<HttpHandler> = lazy { ApacheClient() }, // lazy { ApacheClient.supportProxy(env(env_HTTPS_PROXY)) },
+    private val httpClient: Lazy<HttpHandler> = lazy { if (isOnPrem) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() },
     private val tokenHost: Lazy<String> = lazy { env(env_SF_TOKENHOST) },
     private val clientID: String = env(secret_SFClientID),
     private val username: String = env(secret_SFUsername),

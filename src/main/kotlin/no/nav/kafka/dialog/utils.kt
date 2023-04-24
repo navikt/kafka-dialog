@@ -1,13 +1,9 @@
 package no.nav.kafka.dialog
 
 import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonPrimitive
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
-import java.time.Instant
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -25,6 +21,8 @@ import org.http4k.core.Response
 private val log = KotlinLogging.logger { }
 
 val gson = Gson()
+
+val isOnPrem: Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
 
 fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let { p ->
     when {
@@ -94,49 +92,6 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
     return firstOffset.keys.sorted().map {
         "$it:[${firstOffset[it]}-${lastOffset[it]}]"
     }.joinToString(",")
-}
-
-fun removeAdTextProperty(input: String, offset: Long): String {
-    try {
-        val obj = JsonParser.parseString(input) as JsonObject
-        if (obj.has("properties")) {
-            val array = obj["properties"].asJsonArray
-            array.removeAll { (it as JsonObject)["key"].asString == "adtext" }
-            obj.add("properties", array)
-        }
-        return obj.toString()
-    } catch (e: Exception) {
-        File("/tmp/removepropertyfail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to parse event to remove adtext property")
-    }
-}
-
-// Note: Only replaces numbers on first level of json (not nested values):
-fun replaceNumbersWithInstants(input: String, offset: Long): String {
-    try {
-        val obj = JsonParser.parseString(input) as JsonObject
-        obj.keySet().forEach {
-            if (obj[it].isJsonPrimitive) {
-                if ((obj[it] as JsonPrimitive).isNumber) {
-                    obj.addProperty(it, Instant.ofEpochMilli(obj.get(it).asLong).toString())
-                }
-            }
-        }
-        return obj.toString()
-    } catch (e: Exception) {
-        File("/tmp/replacewithinstantsfail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to replace longs to instants in modifier")
-    }
-}
-
-fun filterTiltakstypeMidlertidigLonnstilskudd(input: String, offset: Long): Boolean {
-    try {
-        val obj = JsonParser.parseString(input) as JsonObject
-        return obj["tiltakstype"].asString == "MIDLERTIDIG_LONNSTILSKUDD"
-    } catch (e: Exception) {
-        File("/tmp/filtertiltakstypefail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to parse input for tiltakstype filter")
-    }
 }
 
 /**

@@ -46,8 +46,8 @@ class KafkaToSFPoster<K, V>(
         var consumedInCurrentRun = 0
 
         val kafkaConsumerConfig = if (avroKeyValue) AKafkaConsumer.configAvro else if (avroValue) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
-        // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
 
+        // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
         val consumer = if (avroKeyValue) {
             AKafkaConsumer<GenericRecord, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
         } else if (avroValue) {
@@ -87,8 +87,7 @@ class KafkaToSFPoster<K, V>(
                             KafkaMessage(
                                 CRM_Topic__c = it.topic(),
                                 CRM_Key__c = if (encodeKey) it.key().toString().encodeB64() else it.key().toString(),
-                                CRM_Value__c = /*(if (bytesAvroValue) (deserializer.deserialize(it.topic(), it.value() as ByteArray) as V).toString() else */ it.value().toString()
-                                    .let { value -> if (modifier == null) value.toString().encodeB64() else modifier.invoke(value.toString(), it.offset()).encodeB64() }
+                                CRM_Value__c = it.value().toString().let { value -> if (modifier == null) value.toString().encodeB64() else modifier.invoke(value.toString(), it.offset()).encodeB64() }
                             )
                         }
                     ).toJson()
