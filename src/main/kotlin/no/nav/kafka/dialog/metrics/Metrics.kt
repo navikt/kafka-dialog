@@ -76,7 +76,8 @@ data class KCommonMetrics(
     val noOfPostedEvents: Gauge = Metrics.registerGauge("sf_posted_event_gauge"),
     val producerIssues: Gauge = Metrics.registerGauge("producer_issues"),
     val consumerIssues: Gauge = Metrics.registerGauge("consumer_issues"),
-    val latestPostedOffset: Gauge = Metrics.registerLabelGauge("latest_posted_offset", "partition")
+    val latestPostedOffset: Gauge = Metrics.registerLabelGauge("latest_posted_offset", "partition"),
+    val latestConsumedOffset: Gauge = Metrics.registerLabelGauge("latest_consumed_offset", "partition")
 )
 
 fun KCommonMetrics.clearWorkSessionMetrics() {

@@ -71,6 +71,8 @@ class KafkaToSFPoster<K, V>(
                     numberOfWorkSessionsWithoutEvents = 0
                     kCommonMetrics.noOfConsumedEvents.inc(cRecordsPreFilter.count().toDouble())
 
+                    cRecordsPreFilter.forEach { kCommonMetrics.latestConsumedOffset.labels(it.partition().toString()).set(it.offset().toDouble()) }
+
                     val kafkaData = cRecordsPreFilter.map {
                         KafkaData(topic = it.topic(), offset = it.offset(), partition = it.partition(), key = it.key().toString(),
                             value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()), originValue = it.value().toString())
