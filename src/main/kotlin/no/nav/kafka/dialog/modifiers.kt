@@ -9,6 +9,7 @@ import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
+import org.http4k.core.Status
 
 /**
  * removeAdTextProperty
@@ -25,8 +26,7 @@ fun removeAdTextProperty(input: String, offset: Long): String {
         }
         return obj.toString()
     } catch (e: Exception) {
-        File("/tmp/removepropertyfail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to parse event to remove adtext property")
+        throw RuntimeException("Unable to parse event to remove adtext property, offset $offset, message: ${e.message}")
     }
 }
 
@@ -47,8 +47,7 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
         }
         return obj.toString()
     } catch (e: Exception) {
-        File("/tmp/replacewithinstantsfail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to replace longs to instants in modifier")
+        throw RuntimeException("Unable to replace longs to instants in modifier, offset $offset, message ${e.message}")
     }
 }
 
@@ -65,10 +64,12 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         val response = client.invoke(request)
 
         File("/tmp/arenaresponse").writeText(response.toMessage())
-
+        if (response.status != Status.OK) {
+            File("/tmp/arenaResponseUnsuccessful").writeText("At offset: $offset\n" + response.toMessage())
+            throw RuntimeException("Unsuccessful response from Arena at lookup, offset $offset")
+        }
         return response.bodyString()
     } catch (e: Exception) {
-        File("/tmp/arenaActivitiesLookUpFail").appendText("OFFSET $offset\n${input}\n\n")
-        throw RuntimeException("Unable to lookup activity details")
+        throw RuntimeException("Unable to lookup activity details, offset $offset, message ${e.message}")
     }
 }

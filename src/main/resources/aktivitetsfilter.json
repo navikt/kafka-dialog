@@ -1,0 +1,50 @@
+[
+  {
+    "aktivitetskode": "EKSPEBIST",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "MENTOR",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "SAMREKR",
+    "aktivitetsgruppekode": "ANN"
+  },
+  {
+    "aktivitetskode": "INFOOMST",
+    "aktivitetsgruppekode": "ANN"
+  },
+  {
+    "aktivitetskode": "INKLUTILS",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "ARBTREN",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "SP_DIALOG1",
+    "aktivitetsgruppekode": "SPES"
+  },
+  {
+    "aktivitetskode": "SP_DIALOG2",
+    "aktivitetsgruppekode": "SPES"
+  },
+  {
+    "aktivitetskode": "SP_DIALOG3",
+    "aktivitetsgruppekode": "SPES"
+  },
+  {
+    "aktivitetskode": "MIDLONTIL",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "VARLONTIL",
+    "aktivitetsgruppekode": "TLTAK"
+  },
+  {
+    "aktivitetskode": "VATIAROR",
+    "aktivitetsgruppekode": "TLTAK"
+  }
+]

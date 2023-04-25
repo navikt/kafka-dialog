@@ -10,6 +10,8 @@ object Metrics {
     private val log = KotlinLogging.logger { }
     val cRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry
 
+    val blockedByFilter: Gauge = registerGauge("blocked_by_filter")
+
     fun registerGauge(name: String): Gauge {
         return Gauge.build().name(name).help(name).register()
     }

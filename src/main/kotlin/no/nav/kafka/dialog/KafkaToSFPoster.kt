@@ -2,6 +2,7 @@ package no.nav.kafka.dialog
 
 import java.io.File
 import mu.KotlinLogging
+import no.nav.kafka.dialog.metrics.Metrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
 import org.apache.avro.generic.GenericRecord
@@ -73,7 +74,7 @@ class KafkaToSFPoster<K, V>(
                     val kafkaData = cRecordsPreFilter.map {
                         KafkaData(topic = it.topic(), offset = it.offset(), partition = it.partition(), key = it.key().toString(),
                             value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()), originValue = it.value().toString())
-                    }.filter { filter == null || filter!!(it.value, it.offset) }.toList()
+                    }.filter { filter == null || filter!!(it.value, it.offset).also { if (!it) Metrics.blockedByFilter.inc() } }.toList()
 
                     kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - kafkaData.size).toDouble())
                     consumedInCurrentRun += kafkaData.size
