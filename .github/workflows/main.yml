@@ -8,4 +8,4 @@ jobs:
     secrets: inherit
     with:
       DEPLOY_APP: sf-arbeidsgiveraktivitet
-      DEPLOY_CLUSTER: dev-fss
+      DEPLOY_CLUSTER: prod-fss
