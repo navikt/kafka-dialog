@@ -57,10 +57,15 @@ val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need f
 
 fun lookUpArenaActivityDetails(input: String, offset: Long): String {
     lateinit var response: Response
+    var aktivitetsId: Long
     try {
         val obj = JsonParser.parseString(input) as JsonObject
-        val aktivitetsId = obj["after"].asJsonObject.get("AKTIVITET_ID").asLong
-
+        aktivitetsId = (if (obj.has("after")) obj["after"] else obj["before"]).asJsonObject.get("AKTIVITET_ID").asLong
+    } catch (e: Exception) {
+        File("/tmp/lookUpArenaActivityDetailsParseInputException").writeText("offset:$offset\ninput:$input\n$e")
+        throw RuntimeException("Unable to lookup activity details, offset $offset", e)
+    }
+    try {
         val client = lookUpApacheClient.value
         val uri = "${env(env_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
         val request = Request(Method.GET, uri)
@@ -77,7 +82,6 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         }
         return response.bodyString()
     } catch (e: Exception) {
-        File("/tmp/lookUpArenaActivityDetailsExceptionBeforeResponse").writeText("offset:$offset\ninput:$input\n$e")
         File("/tmp/lookUpArenaActivityDetailsException").writeText("offset:$offset\ninput:$input\nresponse:\n${response.toMessage()}\nException:$e")
         throw RuntimeException("Unable to lookup activity details, offset $offset, message ${e.message}")
     }
