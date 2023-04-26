@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@v2
+      - uses: nais/deploy/actions/deploy
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
