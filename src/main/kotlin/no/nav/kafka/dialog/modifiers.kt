@@ -71,10 +71,11 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         val request = Request(Method.GET, uri)
         response = client.invoke(request)
 
-        File("/tmp/arenaresponse").writeText(response.toMessage())
+        File("/tmp/latestarenaresponse").writeText(response.toMessage())
         if (response.status == Status.NO_CONTENT) {
             val log = KotlinLogging.logger { }
             log.warn("No content found for aktivitetsid $aktivitetsId")
+            File("/tmp/inputAtNoContentFromArena").writeText(input)
             return """{"aktivitetskode":"NO_CONTENT","aktivitetsgruppekode":"NO_CONTENT"}"""
         } else if (response.status != Status.OK) {
             File("/tmp/arenaResponseUnsuccessful").writeText("At offset: $offset\n" + response.toMessage())
