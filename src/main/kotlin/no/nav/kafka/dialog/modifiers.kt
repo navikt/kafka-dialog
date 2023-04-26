@@ -77,6 +77,7 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         }
         return response.bodyString()
     } catch (e: Exception) {
+        File("/tmp/lookUpArenaActivityDetailsExceptionBeforeResponse").writeText("offset:$offset\ninput:$input\n$e")
         File("/tmp/lookUpArenaActivityDetailsException").writeText("offset:$offset\ninput:$input\nresponse:\n${response.toMessage()}\nException:$e")
         throw RuntimeException("Unable to lookup activity details, offset $offset, message ${e.message}")
     }
