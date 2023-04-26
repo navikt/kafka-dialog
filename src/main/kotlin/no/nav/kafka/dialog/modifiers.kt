@@ -5,6 +5,7 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import java.io.File
 import java.time.Instant
+import mu.KotlinLogging
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -64,7 +65,11 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         val response = client.invoke(request)
 
         File("/tmp/arenaresponse").writeText(response.toMessage())
-        if (response.status != Status.OK) {
+        if (response.status == Status.NO_CONTENT) {
+            val log = KotlinLogging.logger { }
+            log.warn("No content found for aktivitetsid $aktivitetsId")
+            return """{"aktivitetskode":"NO_CONTENT","aktivitetsgruppekode":"NO_CONTENT"}"""
+        } else if (response.status != Status.OK) {
             File("/tmp/arenaResponseUnsuccessful").writeText("At offset: $offset\n" + response.toMessage())
             throw RuntimeException("Unsuccessful response from Arena at lookup, offset $offset")
         }
