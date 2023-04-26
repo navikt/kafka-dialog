@@ -10,6 +10,7 @@ import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
+import org.http4k.core.Response
 import org.http4k.core.Status
 
 /**
@@ -55,6 +56,7 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
 val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
 
 fun lookUpArenaActivityDetails(input: String, offset: Long): String {
+    lateinit var response: Response
     try {
         val obj = JsonParser.parseString(input) as JsonObject
         val aktivitetsId = obj["after"].asJsonObject.get("AKTIVITET_ID").asLong
@@ -62,7 +64,7 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         val client = lookUpApacheClient.value
         val uri = "${env(env_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
         val request = Request(Method.GET, uri)
-        val response = client.invoke(request)
+        response = client.invoke(request)
 
         File("/tmp/arenaresponse").writeText(response.toMessage())
         if (response.status == Status.NO_CONTENT) {
@@ -75,6 +77,7 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
         }
         return response.bodyString()
     } catch (e: Exception) {
+        File("/tmp/lookUpArenaActivityDetailsException").writeText("offset:$offset\ninput:$input\nresponse:\n${response.toMessage()}\nException:$e")
         throw RuntimeException("Unable to lookup activity details, offset $offset, message ${e.message}")
     }
 }
