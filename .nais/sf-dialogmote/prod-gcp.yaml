@@ -26,10 +26,9 @@ spec:
     path: /metrics
   resources:
     limits:
-      cpu: 1000m
       memory: 4096Mi
     requests:
-      cpu: 100m
+      cpu: 10m
       memory: 2048Mi
   accessPolicy:
     outbound:
