@@ -1,12 +1,12 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: { { DEPLOY_APP } }
+  name: {{DEPLOY_APP}}
   namespace: team-dialog
   labels:
     team: team-dialog
 spec:
-  image: { { image } }
+  image: {{image}}
   port: 8080
   replicas:
     min: 1
@@ -44,7 +44,7 @@ spec:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: NO_POST
+      value: NO_POST, FROM_BEGINNING, SAMPLE
     - name: KAFKA_POLL_DURATION
       value: "10000"
     - name: KAFKA_CLIENTID
@@ -58,4 +58,4 @@ spec:
     - name: SF_VERSION
       value: "v48.0"
     - name: DEPLOY_APP
-      value: { { DEPLOY_APP } }
+      value: {{DEPLOY_APP}}
