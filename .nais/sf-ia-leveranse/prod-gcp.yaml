@@ -47,9 +47,9 @@ spec:
     - name: KAFKA_POLL_DURATION
       value: "10000"
     - name: KAFKA_CLIENTID
-      value: # sf-ia-sak-v1
+      value: sf-ia-sak-v1
     - name: KAFKA_TOPIC
-      value: # pia.ia-sak-v1
+      value: pia.ia-sak-v1
     - name: MS_BETWEEN_WORK
       value: "600000"
     - name: SF_TOKENHOST
