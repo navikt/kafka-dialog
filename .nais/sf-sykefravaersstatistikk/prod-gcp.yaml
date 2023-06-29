@@ -56,3 +56,5 @@ spec:
       value: https://login.salesforce.com
     - name: DEPLOY_APP
       value: {{ DEPLOY_APP }}
+    - name: DEPLOY_CLUSTER
+      value: {{ DEPLOY_CLUSTER }}
