@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   build-deploy:
     uses: ./.github/workflows/workflow.yml
+    permissions:
+      contents: write
     secrets: inherit
     with:
       DEPLOY_APP: sf-ia-leveranse
