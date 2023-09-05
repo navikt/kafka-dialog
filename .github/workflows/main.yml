@@ -6,7 +6,9 @@ jobs:
   build-deploy:
     uses: ./.github/workflows/workflow.yml
     permissions:
-      contents: write
+      packages: 'write'
+      contents: 'read'
+      id-token: 'write'
     secrets: inherit
     with:
       DEPLOY_APP: sf-ia-leveranse
