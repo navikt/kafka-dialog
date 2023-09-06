@@ -11,5 +11,5 @@ jobs:
       id-token: 'write'
     secrets: inherit
     with:
-      DEPLOY_APP: sf-ia-leveranse
+      DEPLOY_APP: sf-ia-sak
       DEPLOY_CLUSTER: dev-gcp
