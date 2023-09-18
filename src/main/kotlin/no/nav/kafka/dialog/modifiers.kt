@@ -55,7 +55,10 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
 
 val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
 
-fun lookUpArenaActivityDetails(input: String, offset: Long): String {
+fun lookUpArenaActivityDetails(system: SystemEnvironment) =
+    { input: String, offset: Long -> lookUpArenaActivityDetails(input, offset, system) }
+
+fun lookUpArenaActivityDetails(input: String, offset: Long, system: SystemEnvironment): String {
     lateinit var response: Response
     var aktivitetsId: Long
     try {
@@ -67,7 +70,7 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
     }
     try {
         val client = lookUpApacheClient.value
-        val uri = "${env(env_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
+        val uri = "${system.env(env_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
         val request = Request(Method.GET, uri)
         response = client.invoke(request)
 

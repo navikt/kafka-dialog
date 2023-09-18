@@ -33,9 +33,9 @@ private val log = KotlinLogging.logger {}
  */
 val schemaRegistryClientConfig = mapOf<String, Any>(
     SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
-    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}"
+    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}"
 )
-val registryClient = CachedSchemaRegistryClient(env(env_KAFKA_SCHEMA_REGISTRY), 100, schemaRegistryClientConfig)
+val registryClient = CachedSchemaRegistryClient(SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY), 100, schemaRegistryClientConfig)
 /***/
 
 sealed class KafkaConsumerStates {
@@ -55,58 +55,23 @@ sealed class KafkaConsumerStates {
  * The first poll gets extra retries due to connectivity latency to clusters when the app is initially booting up
  **/
 open class AKafkaConsumer<K, V>(
+    val system: SystemEnvironment,
     val config: Map<String, Any>,
-    val topic: String = env(env_KAFKA_TOPIC),
-    val pollDuration: Long = envAsLong(env_KAFKA_POLL_DURATION),
     val fromBeginning: Boolean = false,
     val hasCompletedAWorkSession: Boolean = false
 ) {
+
+    val topic: String = system.env(env_KAFKA_TOPIC)
+    val pollDuration: Long = system.envAsLong(env_KAFKA_POLL_DURATION)
+
     companion object {
         val metrics = KConsumerMetrics()
-
-        val configBase: Map<String, Any>
-            get() = mapOf<String, Any>(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to env(env_KAFKA_BROKERS),
-                ConsumerConfig.GROUP_ID_CONFIG to env(env_KAFKA_CLIENTID),
-                ConsumerConfig.CLIENT_ID_CONFIG to env(env_KAFKA_CLIENTID),
-                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
-                ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 200,
-                ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to "false",
-                CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to "SSL",
-                SaslConfigs.SASL_MECHANISM to "PLAIN",
-                SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG to env(env_KAFKA_KEYSTORE_PATH),
-                SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to env(env_KAFKA_CREDSTORE_PASSWORD),
-                SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG to env(env_KAFKA_TRUSTSTORE_PATH),
-                SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG to env(env_KAFKA_CREDSTORE_PASSWORD)
-            )
-
-        val configPlain: Map<String, Any>
-            get() = configBase + mapOf<String, Any>(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java
-            )
-
-        val configAvro: Map<String, Any>
-            get() = configBase + mapOf<String, Any>(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
-                KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to env(env_KAFKA_SCHEMA_REGISTRY),
-                KafkaAvroDeserializerConfig.USER_INFO_CONFIG to "${env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}",
-                KafkaAvroDeserializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
-                KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
-            )
-
-        val configAvroValueOnly: Map<String, Any>
-            get() = configAvro + mapOf<String, Any>(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-                KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
-            )
     }
 
     internal fun <K, V> consume(
         config: Map<String, Any>,
         topic: String,
-        pollDuration: Long = envAsLong(env_KAFKA_POLL_DURATION),
+        pollDuration: Long = system.envAsLong(env_KAFKA_POLL_DURATION),
         fromBeginning: Boolean = false,
         hasCompletedAWorkSession: Boolean = false,
         doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates
@@ -261,4 +226,44 @@ open class AKafkaConsumer<K, V>(
 
     fun consume(handlePolledBatchOfRecords: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Boolean =
         consume(config, topic, pollDuration, fromBeginning, hasCompletedAWorkSession, handlePolledBatchOfRecords)
+}
+
+class KafkaConsumerConfigMap(private val sys: SystemEnvironment) {
+    val configBase: Map<String, Any>
+        get() = mapOf<String, Any>(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to sys.env(env_KAFKA_BROKERS),
+            ConsumerConfig.GROUP_ID_CONFIG to sys.env(env_KAFKA_CLIENTID),
+            ConsumerConfig.CLIENT_ID_CONFIG to sys.env(env_KAFKA_CLIENTID),
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
+            ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 200,
+            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to "false",
+            CommonClientConfigs.SECURITY_PROTOCOL_CONFIG to "SSL",
+            SaslConfigs.SASL_MECHANISM to "PLAIN",
+            SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG to sys.env(env_KAFKA_KEYSTORE_PATH),
+            SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG to sys.env(env_KAFKA_CREDSTORE_PASSWORD),
+            SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG to sys.env(env_KAFKA_TRUSTSTORE_PATH),
+            SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG to sys.env(env_KAFKA_CREDSTORE_PASSWORD)
+        )
+
+    val configPlain: Map<String, Any>
+        get() = configBase + mapOf<String, Any>(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java
+        )
+
+    val configAvro: Map<String, Any>
+        get() = configBase + mapOf<String, Any>(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
+            KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG to sys.env(env_KAFKA_SCHEMA_REGISTRY),
+            KafkaAvroDeserializerConfig.USER_INFO_CONFIG to "${sys.env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${sys.env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}",
+            KafkaAvroDeserializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
+            KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
+        )
+
+    val configAvroValueOnly: Map<String, Any>
+        get() = configAvro + mapOf<String, Any>(
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG to false
+        )
 }
