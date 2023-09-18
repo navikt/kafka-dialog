@@ -22,8 +22,6 @@ private val log = KotlinLogging.logger { }
 
 val gson = Gson()
 
-val isOnPrem: Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
-
 fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let { p ->
     when {
         p.isEmpty() -> this()
@@ -99,15 +97,18 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
  */
 data class KafkaData(val topic: String, val offset: Long, val partition: Int, val key: String, val value: String, val originValue: String)
 
-/**
- * Shortcuts for fetching environment variables
- */
-fun env(env: String): String { return System.getenv(env) }
+open class SystemEnvironment {
+    open fun isOnPrem(): Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
+    /**
+     * Shortcuts for fetching environment variables
+     */
+    open fun env(env: String): String { return System.getenv(env) }
 
-fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
+    open fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
 
-fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
+    open fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
 
-fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+    open fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
 
-fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+    open fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+}
