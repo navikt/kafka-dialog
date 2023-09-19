@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
+import java.util.Properties
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,6 +99,7 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
 data class KafkaData(val topic: String, val offset: Long, val partition: Int, val key: String, val value: String, val originValue: String)
 
 open class SystemEnvironment {
+
     open fun isOnPrem(): Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
     /**
      * Shortcuts for fetching environment variables
@@ -111,4 +113,6 @@ open class SystemEnvironment {
     open fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
 
     open fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+
+    open fun <K, V> kafkaConsumer(properties: Properties) = org.apache.kafka.clients.consumer.KafkaConsumer<K, V>(properties)
 }
