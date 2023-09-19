@@ -21,7 +21,6 @@ import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
@@ -79,7 +78,7 @@ open class AKafkaConsumer<K, V>(
     ): Boolean =
         try {
             kErrorState = ErrorState.NONE
-            KafkaConsumer<K, V>(Properties().apply { config.forEach { set(it.key, it.value) } })
+            system.kafkaConsumer<K, V>(Properties().apply { config.forEach { set(it.key, it.value) } })
                 .apply {
                     if (fromBeginning)
                         this.runCatching {
@@ -108,7 +107,7 @@ open class AKafkaConsumer<K, V>(
                     tailrec fun loop(keepGoing: Boolean, retriesLeft: Int = 5): Unit = when {
                         ShutdownHook.isActive() || PrestopHook.isActive() || !keepGoing -> (if (ShutdownHook.isActive() || PrestopHook.isActive()) { log.warn { "Kafka stopped consuming prematurely due to hook" }; Unit } else Unit)
                         else -> {
-                            val pollstate = pollAndConsumption(c as KafkaConsumer<K, V>, pollDuration, retriesLeft > 0, doConsume)
+                            val pollstate = pollAndConsumption(c, pollDuration, retriesLeft > 0, doConsume)
                             val retries = if (pollstate == Pollstate.RETRY) (retriesLeft - 1).coerceAtLeast(0) else 0
                             if (pollstate == Pollstate.RETRY) {
                                 // We will retry poll in a minute
