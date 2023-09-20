@@ -115,4 +115,6 @@ open class SystemEnvironment {
     open fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
 
     open fun <K, V> kafkaConsumer(properties: Properties) = org.apache.kafka.clients.consumer.KafkaConsumer<K, V>(properties)
+
+    open fun httpClient() = lazy { if (isOnPrem()) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() }
 }
