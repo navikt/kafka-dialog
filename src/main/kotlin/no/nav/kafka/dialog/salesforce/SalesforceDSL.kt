@@ -9,7 +9,6 @@ import no.nav.kafka.dialog.metrics.ErrorState
 import no.nav.kafka.dialog.metrics.SFMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.kErrorState
-import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -128,7 +127,7 @@ sealed class SFAccessToken {
 
 class SalesforceClient(private val system: SystemEnvironment) {
 
-    private val httpClient: Lazy<HttpHandler> = lazy { if (system.isOnPrem()) ApacheClient.supportProxy(system.env(env_HTTPS_PROXY)) else ApacheClient() }
+    private val httpClient: Lazy<HttpHandler> = system.httpClient()
     private val tokenHost: Lazy<String> = lazy { system.env(env_SF_TOKENHOST) }
     private val clientID: String = system.env(secret_SFClientID)
     private val username: String = system.env(secret_SFUsername)
