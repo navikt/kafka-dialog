@@ -18,6 +18,7 @@ import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.kErrorState
 import no.nav.kafka.dialog.metrics.kafkaConsumerOffsetRangeBoard
 import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -107,7 +108,7 @@ open class AKafkaConsumer<K, V>(
                     tailrec fun loop(keepGoing: Boolean, retriesLeft: Int = 5): Unit = when {
                         ShutdownHook.isActive() || PrestopHook.isActive() || !keepGoing -> (if (ShutdownHook.isActive() || PrestopHook.isActive()) { log.warn { "Kafka stopped consuming prematurely due to hook" }; Unit } else Unit)
                         else -> {
-                            val pollstate = c.pollAndConsumption(pollDuration, retriesLeft > 0, doConsume)
+                            val pollstate = pollAndConsumption(c as KafkaConsumer<K, V>, pollDuration, retriesLeft > 0, doConsume)
                             val retries = if (pollstate == Pollstate.RETRY) (retriesLeft - 1).coerceAtLeast(0) else 0
                             if (pollstate == Pollstate.RETRY) {
                                 // We will retry poll in a minute
@@ -137,8 +138,8 @@ open class AKafkaConsumer<K, V>(
         return this == Pollstate.RETRY || this == Pollstate.OK
     }
 
-    private fun <K, V> KafkaConsumer<K, V>.pollAndConsumption(pollDuration: Long, retryIfNoRecords: Boolean, doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Pollstate =
-        runCatching {
+    private fun <K, V> pollAndConsumption(consumer: Consumer<K, V>, pollDuration: Long, retryIfNoRecords: Boolean, doConsume: (ConsumerRecords<K, V>) -> KafkaConsumerStates): Pollstate =
+        consumer.runCatching {
             poll(Duration.ofMillis(pollDuration)) as ConsumerRecords<K, V>
         }
             .onFailure {
@@ -186,7 +187,7 @@ open class AKafkaConsumer<K, V>(
                         try {
                             val hasConsumed = cRecords.count() > 0
                             if (hasConsumed) { // Only need to commit anything if records was fetched
-                                commitSync()
+                                consumer.commitSync()
                                 if (!kafkaConsumerOffsetRangeBoard.containsKey("$currentConsumerMessageHost$POSTFIX_FIRST")) kafkaConsumerOffsetRangeBoard["$currentConsumerMessageHost$POSTFIX_FIRST"] = Pair(cRecords.first().offset(), cRecords.last().offset())
                                 kafkaConsumerOffsetRangeBoard["$currentConsumerMessageHost$POSTFIX_LATEST"] = Pair(cRecords.first().offset(), cRecords.last().offset())
                             }
