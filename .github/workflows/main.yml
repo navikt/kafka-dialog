@@ -11,5 +11,5 @@ jobs:
       id-token: 'write'
     secrets: inherit
     with:
-      DEPLOY_APP: sf-crm-activity-events
+      DEPLOY_APP: sf-crm-activity-oppgaver
       DEPLOY_CLUSTER: dev-gcp
