@@ -31,11 +31,12 @@ private val log = KotlinLogging.logger {}
 /***
  * Below used only for special case of parsing avro in app, see Settings.bytesAvro
  */
-val schemaRegistryClientConfig = mapOf<String, Any>(
+val schemaRegistryClientConfig by lazy { mapOf<String, Any>(
     SchemaRegistryClientConfig.BASIC_AUTH_CREDENTIALS_SOURCE to "USER_INFO",
-    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}"
-)
-val registryClient = CachedSchemaRegistryClient(SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY), 100, schemaRegistryClientConfig)
+    SchemaRegistryClientConfig.USER_INFO_CONFIG to "${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_USER)}:${SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY_PASSWORD)}")
+}
+
+val registryClient by lazy { CachedSchemaRegistryClient(SystemEnvironment().env(env_KAFKA_SCHEMA_REGISTRY), 100, schemaRegistryClientConfig) }
 /***/
 
 sealed class KafkaConsumerStates {
