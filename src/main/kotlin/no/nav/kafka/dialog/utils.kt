@@ -14,6 +14,8 @@ import org.apache.http.HttpHost
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.HttpClients
+import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
@@ -114,7 +116,7 @@ open class SystemEnvironment {
 
     open fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
 
-    open fun <K, V> kafkaConsumer(properties: Properties) = org.apache.kafka.clients.consumer.KafkaConsumer<K, V>(properties)
+    open fun <K, V> kafkaConsumer(properties: Properties) = KafkaConsumer<K, V>(properties) as Consumer<K, V>
 
     open fun httpClient() = lazy { if (isOnPrem()) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() }
 }
