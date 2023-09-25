@@ -121,4 +121,6 @@ open class SystemEnvironment {
     open fun httpClient() = lazy { if (isOnPrem()) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() }
 
     open fun retryConsumptionDelay(): Long = 60000
+
+    open fun hasRunOnceHook(hasRunOnce: Boolean) { }
 }
