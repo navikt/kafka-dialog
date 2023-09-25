@@ -37,6 +37,7 @@ class KafkaToSFPoster<K, V>(
     var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
     fun runWorkSession() {
+        system.hasRunOnceHook(hasRunOnce)
         if (runOnce && hasRunOnce) {
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
             return
