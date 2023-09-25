@@ -122,5 +122,7 @@ open class SystemEnvironment {
 
     open fun retryConsumptionDelay(): Long = 60000
 
+    open fun accessTokenRetryDelay() = 1_500L
+
     open fun hasRunOnceHook(hasRunOnce: Boolean) { }
 }
