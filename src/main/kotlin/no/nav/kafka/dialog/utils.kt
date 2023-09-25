@@ -119,4 +119,6 @@ open class SystemEnvironment {
     open fun <K, V> kafkaConsumer(properties: Properties) = KafkaConsumer<K, V>(properties) as Consumer<K, V>
 
     open fun httpClient() = lazy { if (isOnPrem()) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() }
+
+    open fun retryConsumptionDelay(): Long = 60000
 }

@@ -113,7 +113,7 @@ open class AKafkaConsumer<K, V>(
                             if (pollstate == Pollstate.RETRY) {
                                 // We will retry poll in a minute
                                 log.info { "Kafka consumer - No records found on $topic, retry consumption in 60s. Retries left: $retries" }
-                                conditionalWait(60000)
+                                conditionalWait(system.retryConsumptionDelay())
                             } else if (pollstate == Pollstate.FAILURE) {
                                 exitOk = false
                             }
