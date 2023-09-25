@@ -133,7 +133,6 @@ class SalesforceClient(private val system: SystemEnvironment) {
     private val username: String = system.env(secret_SFUsername)
     private val keystore: KeystoreBase =
         KeystoreBase.fromBase64(system.env(secret_keystoreJKSB64), system.env(secret_KeystorePassword), system.env(secret_PrivateKeyAlias), system.env(secret_PrivateKeyPassword))
-    private val retryDelay: Long = 1_500
     private val transferAT: SFAccessToken = SFAccessToken.Missing
 
     val SF_PATH_sObject = lazy { "/services/data/$SALESFORCE_VERSION/composite/sobjects" }
@@ -188,7 +187,7 @@ class SalesforceClient(private val system: SystemEnvironment) {
                     is SFAccessToken.Missing -> {
                         if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
                         else {
-                            runCatching { runBlocking { delay(retry * retryDelay) } }
+                            runCatching { runBlocking { delay(retry * system.accessTokenRetryDelay()) } }
                             getAccessTokenWithRetries(retry + 1, maxRetries)
                         }
                     }
