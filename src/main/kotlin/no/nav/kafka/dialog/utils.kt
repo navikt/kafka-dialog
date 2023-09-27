@@ -125,4 +125,8 @@ open class SystemEnvironment {
     open fun accessTokenRetryDelay() = 1_500L
 
     open fun hasRunOnceHook(hasRunOnce: Boolean) { }
+
+    open fun lookUpApacheClient() = lookUpApacheClient
 }
+
+val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() }
