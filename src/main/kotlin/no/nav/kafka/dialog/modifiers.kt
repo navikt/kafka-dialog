@@ -6,8 +6,6 @@ import com.google.gson.JsonPrimitive
 import java.io.File
 import java.time.Instant
 import mu.KotlinLogging
-import org.http4k.client.ApacheClient
-import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -53,8 +51,6 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
     }
 }
 
-val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
-
 fun lookUpArenaActivityDetails(system: SystemEnvironment) =
     { input: String, offset: Long -> lookUpArenaActivityDetails(input, offset, system) }
 
@@ -69,7 +65,7 @@ fun lookUpArenaActivityDetails(input: String, offset: Long, system: SystemEnviro
         throw RuntimeException("Unable to lookup activity details, offset $offset", e)
     }
     try {
-        val client = lookUpApacheClient.value
+        val client = system.lookUpApacheClient().value
         val uri = "${system.env(env_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
         val request = Request(Method.GET, uri)
         response = client.invoke(request)
