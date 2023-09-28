@@ -14,6 +14,7 @@ import org.http4k.core.MemoryResponse
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.Status.Companion.FORBIDDEN
+import org.http4k.core.Status.Companion.NO_CONTENT
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.junit.jupiter.api.AfterEach
@@ -222,6 +223,37 @@ class BootstrapTest {
         application(env).start()
         // assert
         assertFalse(hasKafkaConsumerCommitted())
+    }
+
+    @Test
+    fun `sf-arbeidsgiveraktivitet app should filter unknown codes received from Arena`() {
+        // arrange
+        val unknownArenaResponse = """{"aktivitetskode": "unknown","aktivitetsgruppekode": "unknown"}"""
+        setupDeployApp("sf-arbeidsgiveraktivitet")
+        setupAccessToken(OK)
+        setupKafkaToProduce(arenaActivity)
+        setupHTTPResponse(body = unknownArenaResponse)
+        setupSalesforceHTTPResponse(success = true)
+        // act
+        application(env).start()
+        // assert
+        assertFalse(salesforceRequest().contains(unknownArenaResponse.base64Encode()))
+        assertTrue(hasKafkaConsumerCommitted())
+    }
+
+    @Test
+    fun `sf-arbeidsgiveraktivitet app should handle NO_CONTENT answer from Arena`() {
+        // arrange
+        setupDeployApp("sf-arbeidsgiveraktivitet")
+        setupAccessToken(OK)
+        setupKafkaToProduce(arenaActivity)
+        setupHTTPResponse(NO_CONTENT)
+        setupSalesforceHTTPResponse(success = true)
+        // act
+        application(env).start()
+        // assert
+        assertTrue(salesforceRequest().contains(""""records":[]"""))
+        assertTrue(hasKafkaConsumerCommitted())
     }
 
     @Test
