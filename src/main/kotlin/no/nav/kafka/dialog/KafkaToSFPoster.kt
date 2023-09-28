@@ -47,7 +47,7 @@ class KafkaToSFPoster<K, V>(
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
-        val kafkaConsumerConfig = if (avroKeyValue) KafkaConsumerConfigMap(system).configAvro else if (avroValue) KafkaConsumerConfigMap(system).configAvroValueOnly else KafkaConsumerConfigMap(system).configPlain
+        val kafkaConsumerConfig = if (avroKeyValue) ConsumerConfigMap(system).configAvro else if (avroValue) ConsumerConfigMap(system).configAvroValueOnly else ConsumerConfigMap(system).configPlain
 
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
         val consumer = if (avroKeyValue) {

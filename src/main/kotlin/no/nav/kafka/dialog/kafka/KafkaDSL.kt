@@ -229,7 +229,7 @@ open class AKafkaConsumer<K, V>(
         consume(config, topic, pollDuration, fromBeginning, hasCompletedAWorkSession, handlePolledBatchOfRecords)
 }
 
-class KafkaConsumerConfigMap(private val sys: SystemEnvironment) {
+class ConsumerConfigMap(private val sys: SystemEnvironment) {
     val configBase: Map<String, Any>
         get() = mapOf<String, Any>(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to sys.env(env_KAFKA_BROKERS),
