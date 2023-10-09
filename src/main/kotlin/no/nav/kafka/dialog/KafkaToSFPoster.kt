@@ -104,11 +104,11 @@ class KafkaToSFPoster<K, V>(
                         when (postActivities(body).isSuccess()) {
                             true -> {
                                 kCommonMetrics.noOfPostedEvents.inc(kafkaData.size.toDouble())
-                                if (!firstOffsetPosted.containsKey(kafkaData.first().partition)) firstOffsetPosted[kafkaData.first().partition] = kafkaData.first().offset
-                                lastOffsetPosted[kafkaData.last().partition] = kafkaData.last().offset
+                                updateOffset(kafkaData, firstOffsetPosted, lastOffsetPosted)
                                 kafkaData.forEach { kCommonMetrics.latestPostedOffset.labels(it.partition.toString()).set(it.offset.toDouble()) }
                                 KafkaConsumerStates.IsOk
                             }
+
                             false -> {
                                 log.warn { "Failed when posting to SF" }
                                 kCommonMetrics.producerIssues.inc()
@@ -126,5 +126,15 @@ class KafkaToSFPoster<K, V>(
             }
         }
         if (consumedInCurrentRun == 0) numberOfWorkSessionsWithoutEvents++
+    }
+
+    private fun updateOffset(
+        kafkaData: List<KafkaData>,
+        firstOffsetPosted: MutableMap<Int, Long>,
+        lastOffsetPosted: MutableMap<Int, Long>
+    ) {
+        if (kafkaData.isEmpty()) return
+        if (!firstOffsetPosted.containsKey(kafkaData.first().partition)) firstOffsetPosted[kafkaData.first().partition] = kafkaData.first().offset
+        lastOffsetPosted[kafkaData.last().partition] = kafkaData.last().offset
     }
 }
