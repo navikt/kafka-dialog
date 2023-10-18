@@ -9,7 +9,6 @@ import no.nav.kafka.dialog.metrics.ErrorState
 import no.nav.kafka.dialog.metrics.SFMetrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.kErrorState
-import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -126,17 +125,16 @@ sealed class SFAccessToken {
     }
 }
 
-class SalesforceClient(
-    private val httpClient: Lazy<HttpHandler> = lazy { if (isOnPrem) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() },
-    private val tokenHost: Lazy<String> = lazy { env(env_SF_TOKENHOST) },
-    private val clientID: String = env(secret_SFClientID),
-    private val username: String = env(secret_SFUsername),
-    private val keystore: KeystoreBase = KeystoreBase.fromBase64(env(secret_keystoreJKSB64), env(secret_KeystorePassword),
-        env(secret_PrivateKeyAlias), env(secret_PrivateKeyPassword)
-),
-    private val retryDelay: Long = 1_500,
-    transferAT: SFAccessToken = SFAccessToken.Missing
-) {
+class SalesforceClient(private val system: SystemEnvironment) {
+
+    private val httpClient: Lazy<HttpHandler> = system.httpClient()
+    private val tokenHost: Lazy<String> = lazy { system.env(env_SF_TOKENHOST) }
+    private val clientID: String = system.env(secret_SFClientID)
+    private val username: String = system.env(secret_SFUsername)
+    private val keystore: KeystoreBase =
+        KeystoreBase.fromBase64(system.env(secret_keystoreJKSB64), system.env(secret_KeystorePassword), system.env(secret_PrivateKeyAlias), system.env(secret_PrivateKeyPassword))
+    private val transferAT: SFAccessToken = SFAccessToken.Missing
+
     val SF_PATH_sObject = lazy { "/services/data/$SALESFORCE_VERSION/composite/sobjects" }
 
     private val claim: JWTClaimBase.Exists
@@ -189,7 +187,7 @@ class SalesforceClient(
                     is SFAccessToken.Missing -> {
                         if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
                         else {
-                            runCatching { runBlocking { delay(retry * retryDelay) } }
+                            runCatching { runBlocking { delay(retry * system.accessTokenRetryDelay()) } }
                             getAccessTokenWithRetries(retry + 1, maxRetries)
                         }
                     }

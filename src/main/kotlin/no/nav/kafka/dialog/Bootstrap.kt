@@ -1,10 +1,10 @@
 package no.nav.kafka.dialog
 
-val application: App = when (env(env_DEPLOY_APP)) {
-    "sf-dialogmote" -> KafkaPosterApplication<String, String>(envAsSettings(env_POSTER_SETTINGS), ::replaceNumbersWithInstants)
-    "sf-stilling" -> KafkaPosterApplication<String, String>(envAsSettings(env_POSTER_SETTINGS), ::removeAdTextProperty)
-    "sf-arbeidsgiveraktivitet" -> KafkaPosterApplication<String, String>(envAsSettings(env_POSTER_SETTINGS), ::lookUpArenaActivityDetails, ::filterOnActivityCodes)
-    else -> KafkaPosterApplication<String, String>(envAsSettings(env_POSTER_SETTINGS))
+fun application(system: SystemEnvironment): App = when (system.env(env_DEPLOY_APP)) {
+    "sf-dialogmote" -> KafkaPosterApplication<String, String>(system, ::replaceNumbersWithInstants)
+    "sf-stilling" -> KafkaPosterApplication<String, String>(system, ::removeAdTextProperty)
+    "sf-arbeidsgiveraktivitet" -> KafkaPosterApplication<String, String>(system, lookUpArenaActivityDetails(system), ::filterOnActivityCodes)
+    else -> KafkaPosterApplication<String, String>(system)
 }
 
-fun main() = application.start()
+fun main() = application(SystemEnvironment()).start()
