@@ -9,17 +9,17 @@ import mu.KotlinLogging
  * an interruptable pause (configured with MS_BETWEEN_WORK).
  */
 class KafkaPosterApplication<K, V>(
-    val settings: List<KafkaToSFPoster.Settings> = listOf(),
+    val system: SystemEnvironment,
     modifier: ((String, Long) -> String)? = null,
     filter: ((String, Long) -> Boolean)? = null
 ) : App {
-    val poster = KafkaToSFPoster<K, V>(settings, modifier, filter)
+    val poster = KafkaToSFPoster<K, V>(system, modifier, filter)
 
-    private val bootstrapWaitTime = envAsLong(env_MS_BETWEEN_WORK)
+    private val bootstrapWaitTime = system.envAsLong(env_MS_BETWEEN_WORK)
 
     private val log = KotlinLogging.logger { }
     override fun start() {
-        log.info { "Starting app ${env(env_DEPLOY_APP)} - cluster ${env(env_DEPLOY_CLUSTER)} (${if (isOnPrem) "Onprem" else "Gcp"}) with poster settings ${envAsSettings(env_POSTER_SETTINGS)}" }
+        log.info { "Starting app ${system.env(env_DEPLOY_APP)} - cluster ${system.env(env_DEPLOY_CLUSTER)} (${if (system.isOnPrem()) "Onprem" else "Gcp"}) with poster settings ${system.envAsSettings(env_POSTER_SETTINGS)}" }
         enableNAISAPI {
             loop()
         }

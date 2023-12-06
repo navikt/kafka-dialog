@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
+import java.util.Properties
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,6 +14,8 @@ import org.apache.http.HttpHost
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.HttpClients
+import org.apache.kafka.clients.consumer.Consumer
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
@@ -21,8 +24,6 @@ import org.http4k.core.Response
 private val log = KotlinLogging.logger { }
 
 val gson = Gson()
-
-val isOnPrem: Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
 
 fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let { p ->
     when {
@@ -99,15 +100,33 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
  */
 data class KafkaData(val topic: String, val offset: Long, val partition: Int, val key: String, val value: String, val originValue: String)
 
-/**
- * Shortcuts for fetching environment variables
- */
-fun env(env: String): String { return System.getenv(env) }
+open class SystemEnvironment {
 
-fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
+    open fun isOnPrem(): Boolean = env(env_DEPLOY_CLUSTER) == "dev-fss" || env(env_DEPLOY_CLUSTER) == "prod-fss"
+    /**
+     * Shortcuts for fetching environment variables
+     */
+    open fun env(env: String): String { return System.getenv(env) }
 
-fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
+    open fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
 
-fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+    open fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
 
-fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+    open fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+
+    open fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+
+    open fun <K, V> kafkaConsumer(properties: Properties) = KafkaConsumer<K, V>(properties) as Consumer<K, V>
+
+    open fun httpClient() = lazy { if (isOnPrem()) ApacheClient.supportProxy(env(env_HTTPS_PROXY)) else ApacheClient() }
+
+    open fun retryConsumptionDelay(): Long = 60000
+
+    open fun accessTokenRetryDelay() = 1_500L
+
+    open fun hasRunOnceHook(hasRunOnce: Boolean) { }
+
+    open fun lookUpApacheClient() = lookUpApacheClient
+}
+
+val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() }

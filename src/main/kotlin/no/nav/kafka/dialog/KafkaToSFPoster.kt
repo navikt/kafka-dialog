@@ -15,16 +15,16 @@ import org.apache.avro.generic.GenericRecord
  * (Returns KafkaConsumerStates.IsOk only when we are sure the data has been sent )
  */
 class KafkaToSFPoster<K, V>(
-    val settings: List<Settings> = listOf(),
+    private val system: SystemEnvironment,
     val modifier: ((String, Long) -> String)? = null,
     val filter: ((String, Long) -> Boolean)? = null
 ) {
     private val log = KotlinLogging.logger { }
-
+    private val settings = system.envAsSettings(env_POSTER_SETTINGS)
     enum class Settings {
         DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
     }
-    val sfClient = SalesforceClient()
+    val sfClient = SalesforceClient(system)
 
     val fromBeginning = settings.contains(Settings.FROM_BEGINNING)
     val noPost = settings.contains(Settings.NO_POST)
@@ -37,6 +37,7 @@ class KafkaToSFPoster<K, V>(
     var samples = numberOfSamplesInSampleRun
     var hasRunOnce = false
     fun runWorkSession() {
+        system.hasRunOnceHook(hasRunOnce)
         if (runOnce && hasRunOnce) {
             log.info { "Work session skipped due to setting Only Run Once, and has consumed once" }
             return
@@ -46,15 +47,15 @@ class KafkaToSFPoster<K, V>(
         var lastOffsetPosted: MutableMap<Int, Long> = mutableMapOf() /** Last offset posted per kafka partition **/
         var consumedInCurrentRun = 0
 
-        val kafkaConsumerConfig = if (avroKeyValue) AKafkaConsumer.configAvro else if (avroValue) AKafkaConsumer.configAvroValueOnly else AKafkaConsumer.configPlain
+        val kafkaConsumerConfig = if (avroKeyValue) ConsumerConfigMap(system).configAvro else if (avroValue) ConsumerConfigMap(system).configAvroValueOnly else ConsumerConfigMap(system).configPlain
 
         // Instansiate each time to fetch config from current state of environment (fetch injected updates of credentials etc):
         val consumer = if (avroKeyValue) {
-            AKafkaConsumer<GenericRecord, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+            AKafkaConsumer<GenericRecord, GenericRecord>(system, kafkaConsumerConfig, fromBeginning, hasRunOnce)
         } else if (avroValue) {
-            AKafkaConsumer<K, GenericRecord>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+            AKafkaConsumer<K, GenericRecord>(system, kafkaConsumerConfig, fromBeginning, hasRunOnce)
         } else {
-            AKafkaConsumer<K, V>(kafkaConsumerConfig, env(env_KAFKA_TOPIC), envAsLong(env_KAFKA_POLL_DURATION), fromBeginning, hasRunOnce)
+            AKafkaConsumer<K, V>(system, kafkaConsumerConfig, fromBeginning, hasRunOnce)
         }
 
         sfClient.enablesObjectPost { postActivities ->
@@ -103,11 +104,11 @@ class KafkaToSFPoster<K, V>(
                         when (postActivities(body).isSuccess()) {
                             true -> {
                                 kCommonMetrics.noOfPostedEvents.inc(kafkaData.size.toDouble())
-                                if (!firstOffsetPosted.containsKey(kafkaData.first().partition)) firstOffsetPosted[kafkaData.first().partition] = kafkaData.first().offset
-                                lastOffsetPosted[kafkaData.last().partition] = kafkaData.last().offset
+                                updateOffset(kafkaData, firstOffsetPosted, lastOffsetPosted)
                                 kafkaData.forEach { kCommonMetrics.latestPostedOffset.labels(it.partition.toString()).set(it.offset.toDouble()) }
                                 KafkaConsumerStates.IsOk
                             }
+
                             false -> {
                                 log.warn { "Failed when posting to SF" }
                                 kCommonMetrics.producerIssues.inc()
@@ -125,5 +126,15 @@ class KafkaToSFPoster<K, V>(
             }
         }
         if (consumedInCurrentRun == 0) numberOfWorkSessionsWithoutEvents++
+    }
+
+    private fun updateOffset(
+        kafkaData: List<KafkaData>,
+        firstOffsetPosted: MutableMap<Int, Long>,
+        lastOffsetPosted: MutableMap<Int, Long>
+    ) {
+        if (kafkaData.isEmpty()) return
+        if (!firstOffsetPosted.containsKey(kafkaData.first().partition)) firstOffsetPosted[kafkaData.first().partition] = kafkaData.first().offset
+        lastOffsetPosted[kafkaData.last().partition] = kafkaData.last().offset
     }
 }
