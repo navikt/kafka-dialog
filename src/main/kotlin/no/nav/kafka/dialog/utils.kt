@@ -4,6 +4,10 @@ import com.google.gson.Gson
 import io.prometheus.client.Histogram
 import java.io.File
 import java.net.URI
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -99,15 +103,38 @@ fun offsetMapsToText(firstOffset: MutableMap<Int, Long>, lastOffset: MutableMap<
  */
 data class KafkaData(val topic: String, val offset: Long, val partition: Int, val key: String, val value: String, val originValue: String)
 
+private fun Long.parsedAsMillisSecondsTime(): String {
+    val seconds = (this / 1000) % 60
+    val minutes = (this / (1000 * 60)) % 60
+    val hours = (this / (1000 * 60 * 60))
+
+    return "($hours hours, $minutes minutes, $seconds seconds)"
+}
+
+fun findMillisToHourNextDay(hour: Int): Long {
+    val currentDateTime = LocalDateTime.now()
+    val zone = ZoneId.systemDefault()
+    val givenHourNextDay = currentDateTime.plusDays(1).with(LocalTime.of(hour, 0)).atZone(zone)
+
+    val result = givenHourNextDay.toInstant().toEpochMilli() - System.currentTimeMillis()
+
+    log.info { "Will sleep until hour $hour next day, that is ${result.parsedAsMillisSecondsTime()} from now" }
+    return result
+}
+
 /**
  * Shortcuts for fetching environment variables
  */
-fun env(env: String): String { return System.getenv(env) }
+fun env(env: String): String = System.getenv(env)
 
-fun envAsLong(env: String): Long { return System.getenv(env).toLong() }
+fun envAsLong(env: String): Long = System.getenv(env).toLong()
 
-fun envAsInt(env: String): Int { return System.getenv(env).toInt() }
+fun envAsInt(env: String): Int = System.getenv(env).toInt()
 
-fun envAsList(env: String): List<String> { return System.getenv(env).split(",").map { it.trim() }.toList() }
+fun envAsList(env: String): List<String> = System.getenv(env).split(",").map { it.trim() }
 
-fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> { return envAsList(env).stream().map { KafkaToSFPoster.Settings.valueOf(it) }.toList() }
+fun envAsLocalDates(env: String): List<LocalDate> = System.getenv(env).split(",")
+    .map { LocalDate.parse(it.trim()) }
+
+fun envAsSettings(env: String): List<KafkaToSFPoster.Settings> = System.getenv(env).split(",")
+    .map { KafkaToSFPoster.Settings.valueOf(it.trim()) }.toList()

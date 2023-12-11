@@ -22,7 +22,7 @@ class KafkaToSFPoster<K, V>(
     private val log = KotlinLogging.logger { }
 
     enum class Settings {
-        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
+        DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE, LIMIT_ON_DATES
     }
     val sfClient = SalesforceClient()
 
