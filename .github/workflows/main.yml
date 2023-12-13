@@ -10,5 +10,5 @@ jobs:
       contents: 'read'
     secrets: inherit
     with:
-      DEPLOY_APP: sf-sykefravarsstatistikk-naringskode
+      DEPLOY_APP: sf-sykefravarsstatistikk-sektor
       DEPLOY_CLUSTER: dev-gcp
