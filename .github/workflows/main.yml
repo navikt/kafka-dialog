@@ -10,5 +10,5 @@ jobs:
       contents: 'read'
     secrets: inherit
     with:
-      DEPLOY_APP: sf-permiteringsvarsel
+      DEPLOY_APP: sf-sykefravarsstatistikk
       DEPLOY_CLUSTER: dev-gcp
