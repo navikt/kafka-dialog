@@ -3,6 +3,7 @@ package no.nav.kafka.dialog
 const val env_DEPLOY_APP = "DEPLOY_APP"
 const val env_DEPLOY_CLUSTER = "DEPLOY_CLUSTER"
 const val env_POSTER_SETTINGS = "POSTER_SETTINGS"
+const val env_ACTIVE_DATES = "ACTIVE_DATES"
 
 const val env_MS_BETWEEN_WORK = "MS_BETWEEN_WORK"
 
@@ -39,4 +40,5 @@ const val secret_PrivateKeyAlias = "PrivateKeyAlias"
 const val secret_PrivateKeyPassword = "PrivateKeyPassword"
 
 const val numberOfSamplesInSampleRun = 3
+const val hourToStartWorkSessionOnActiveDate = 8
 const val SALESFORCE_VERSION = "v56.0"

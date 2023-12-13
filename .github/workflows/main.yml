@@ -8,8 +8,7 @@ jobs:
     permissions:
       packages: 'write'
       contents: 'read'
-      id-token: 'write'
     secrets: inherit
     with:
-      DEPLOY_APP: sf-sykefravarsstatistikk-metadata
+      DEPLOY_APP: sf-permiteringsvarsel
       DEPLOY_CLUSTER: dev-gcp
