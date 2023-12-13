@@ -1,7 +1,5 @@
 package no.nav.kafka.dialog
 
-import java.security.KeyStore
-import java.security.PrivateKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -15,6 +13,8 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import java.security.KeyStore
+import java.security.PrivateKey
 
 private val log = KotlinLogging.logger { }
 
@@ -30,11 +30,11 @@ sealed class KeystoreBase {
     data class Exists(val privateKey: PrivateKey) : KeystoreBase() {
         fun sign(data: ByteArray): SignatureBase = runCatching {
             java.security.Signature.getInstance("SHA256withRSA")
-                    .apply {
-                        initSign(privateKey)
-                        update(data)
-                    }
-                    .run { SignatureBase.Exists(sign().encodeB64()) }
+                .apply {
+                    initSign(privateKey)
+                    update(data)
+                }
+                .run { SignatureBase.Exists(sign().encodeB64()) }
         }
             .onFailure { log.error { "Signing failed - ${it.localizedMessage}" } }
             .getOrDefault(SignatureBase.Missing)
@@ -48,15 +48,15 @@ sealed class KeystoreBase {
     companion object {
         fun fromBase64(ksB64: String, ksPwd: String, pkAlias: String, pkPwd: String): KeystoreBase = runCatching {
             Exists(
-                    KeyStore.getInstance("JKS")
-                            .apply { load(ksB64.decodeB64().inputStream(), ksPwd.toCharArray()) }
-                            .run { getKey(pkAlias, pkPwd.toCharArray()) as PrivateKey }
+                KeyStore.getInstance("JKS")
+                    .apply { load(ksB64.decodeB64().inputStream(), ksPwd.toCharArray()) }
+                    .run { getKey(pkAlias, pkPwd.toCharArray()) as PrivateKey }
             )
         }
-                .onFailure {
-                    log.error { "Keystore issues - ${it.localizedMessage}" }
-                }
-                .getOrDefault(Missing)
+            .onFailure {
+                log.error { "Keystore issues - ${it.localizedMessage}" }
+            }
+            .getOrDefault(Missing)
     }
 }
 
@@ -83,10 +83,10 @@ sealed class JWTClaimBase {
         fun fromJson(data: String): JWTClaimBase = runCatching {
             gson.fromJson(data, Exists::class.java)
         }
-                .onFailure {
-                    log.error { "Parsing of JWTClaim failed - ${it.localizedMessage}" }
-                }
-                .getOrDefault(Missing)
+            .onFailure {
+                log.error { "Parsing of JWTClaim failed - ${it.localizedMessage}" }
+            }
+            .getOrDefault(Missing)
     }
 
     // @Serializable
@@ -111,18 +111,20 @@ sealed class SFAccessToken {
 
         fun getPostRequest(sObjectPath: String): Request = log.debug { "Doing getPostRequest with instance_url: $instance_url sObjectPath: $sObjectPath" }.let {
             Request(
-                    Method.POST, "$instance_url$sObjectPath")
-                    .header("Authorization", "$token_type $access_token")
-                    .header("Content-Type", "application/json;charset=UTF-8").also { log.debug { "Returning Request: $it" } }
+                Method.POST,
+                "$instance_url$sObjectPath"
+            )
+                .header("Authorization", "$token_type $access_token")
+                .header("Content-Type", "application/json;charset=UTF-8").also { log.debug { "Returning Request: $it" } }
         }
     }
 
     companion object {
         fun fromJson(data: String): SFAccessToken = runCatching { gson.fromJson(data, Exists::class.java) }
-                .onFailure {
-                    log.error { "Parsing of authorization response failed - ${it.localizedMessage}" }
-                }
-                .getOrDefault(Missing)
+            .onFailure {
+                log.error { "Parsing of authorization response failed - ${it.localizedMessage}" }
+            }
+            .getOrDefault(Missing)
     }
 }
 
@@ -131,9 +133,12 @@ class SalesforceClient(
     private val tokenHost: Lazy<String> = lazy { env(env_SF_TOKENHOST) },
     private val clientID: String = env(secret_SFClientID),
     private val username: String = env(secret_SFUsername),
-    private val keystore: KeystoreBase = KeystoreBase.fromBase64(env(secret_keystoreJKSB64), env(secret_KeystorePassword),
-        env(secret_PrivateKeyAlias), env(secret_PrivateKeyPassword)
-),
+    private val keystore: KeystoreBase = KeystoreBase.fromBase64(
+        env(secret_keystoreJKSB64),
+        env(secret_KeystorePassword),
+        env(secret_PrivateKeyAlias),
+        env(secret_PrivateKeyPassword)
+    ),
     private val retryDelay: Long = 1_500,
     transferAT: SFAccessToken = SFAccessToken.Missing
 ) {
@@ -167,9 +172,9 @@ class SalesforceClient(
 
             // build the request, the assertion to be verified by host with related public key
             Request(Method.POST, tokenURL)
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .query("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
-                    .query("assertion", "${c.addHeader()}.$content")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .query("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
+                .query("assertion", "${c.addHeader()}.$content")
         }
 
     private fun Response.parseAccessToken(): SFAccessToken = when (status) {
@@ -184,18 +189,18 @@ class SalesforceClient(
 
     // should do tailrec, but due to only a few iterations ...
     private fun getAccessTokenWithRetries(retry: Int = 1, maxRetries: Int = 4): SFAccessToken =
-            httpClient.value.measure(accessTokenRequest, metrics.responseLatency).parseAccessToken().let {
-                when (it) {
-                    is SFAccessToken.Missing -> {
-                        if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
-                        else {
-                            runCatching { runBlocking { delay(retry * retryDelay) } }
-                            getAccessTokenWithRetries(retry + 1, maxRetries)
-                        }
+        httpClient.value.measure(accessTokenRequest, metrics.responseLatency).parseAccessToken().let {
+            when (it) {
+                is SFAccessToken.Missing -> {
+                    if (retry > maxRetries) it.also { log.error { "Fail to fetch access token (including retries)" } }
+                    else {
+                        runCatching { runBlocking { delay(retry * retryDelay) } }
+                        getAccessTokenWithRetries(retry + 1, maxRetries)
                     }
-                    else -> (it as SFAccessToken.Exists)
                 }
+                else -> (it as SFAccessToken.Exists)
             }
+        }
 
     private var accessToken: SFAccessToken = transferAT
 
@@ -203,44 +208,44 @@ class SalesforceClient(
 
         val doPostRequest: (String, SFAccessToken.Exists) -> Response = { b, at ->
             httpClient.value.measure(at.getPostRequest(SF_PATH_sObject.value).body(b), metrics.responseLatency)
-                    .also { metrics.postRequest.inc() }
+                .also { metrics.postRequest.inc() }
         }
 
         fun doPost(id: String, at: SFAccessToken.Exists): Pair<Response, SFAccessToken> =
-                doPostRequest(id, at).let { r ->
-                    log.debug { "SF doPost initial response with http status - ${r.status} "/*and body ${r.body} and headers ${r.headers}" */ }
-                    when (r.status) {
-                        Status.UNAUTHORIZED -> {
-                            metrics.accessTokenRefresh.inc()
-                            // try to get new access token
-                            getAccessTokenWithRetries().let {
-                                when (it) {
-                                    is SFAccessToken.Missing -> Pair(Response(Status.UNAUTHORIZED), it)
-                                    else -> Pair(doPostRequest(id, (it as SFAccessToken.Exists)), it)
-                                }
+            doPostRequest(id, at).let { r ->
+                log.debug { "SF doPost initial response with http status - ${r.status} "/*and body ${r.body} and headers ${r.headers}" */ }
+                when (r.status) {
+                    Status.UNAUTHORIZED -> {
+                        metrics.accessTokenRefresh.inc()
+                        // try to get new access token
+                        getAccessTokenWithRetries().let {
+                            when (it) {
+                                is SFAccessToken.Missing -> Pair(Response(Status.UNAUTHORIZED), it)
+                                else -> Pair(doPostRequest(id, (it as SFAccessToken.Exists)), it)
                             }
-                        }
-                        Status.OK -> {
-                            log.debug { "Returned status OK" }
-                            Pair(r, at)
-                        }
-                        Status.CREATED -> {
-                            log.info { "Returned status CREATED" }
-                            Pair(r, at)
-                        }
-                        else -> {
-                            log.error { "SF doPost issue with http status - ${r.status} "/*and body ${r.body} and headers ${r.headers}"*/ }
-                            if (r.status.code == 503) {
-                                kCommonMetrics.consumeErrorServiceUnavailable.inc()
-                                kErrorState = ErrorState.SERVICE_UNAVAILABLE
-                            } else {
-                                kCommonMetrics.unknownErrorConsume.inc()
-                                kErrorState = ErrorState.UNKNOWN_ERROR
-                            }
-                            Pair(r, at)
                         }
                     }
+                    Status.OK -> {
+                        log.debug { "Returned status OK" }
+                        Pair(r, at)
+                    }
+                    Status.CREATED -> {
+                        log.info { "Returned status CREATED" }
+                        Pair(r, at)
+                    }
+                    else -> {
+                        log.error { "SF doPost issue with http status - ${r.status} "/*and body ${r.body} and headers ${r.headers}"*/ }
+                        if (r.status.code == 503) {
+                            kCommonMetrics.consumeErrorServiceUnavailable.inc()
+                            kErrorState = ErrorState.SERVICE_UNAVAILABLE
+                        } else {
+                            kCommonMetrics.unknownErrorConsume.inc()
+                            kErrorState = ErrorState.UNKNOWN_ERROR
+                        }
+                        Pair(r, at)
+                    }
                 }
+            }
 
         // in case of missing access token from last invocation or very first start, try refresh
         if (accessToken is SFAccessToken.Missing) accessToken = getAccessTokenWithRetries()

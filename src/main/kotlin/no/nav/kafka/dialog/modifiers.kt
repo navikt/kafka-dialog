@@ -3,8 +3,6 @@ package no.nav.kafka.dialog
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
-import java.io.File
-import java.time.Instant
 import mu.KotlinLogging
 import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
@@ -12,6 +10,8 @@ import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status
+import java.io.File
+import java.time.Instant
 
 /**
  * removeAdTextProperty

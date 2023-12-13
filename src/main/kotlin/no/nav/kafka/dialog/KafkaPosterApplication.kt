@@ -1,7 +1,7 @@
 package no.nav.kafka.dialog
 
-import java.time.LocalDate
 import mu.KotlinLogging
+import java.time.LocalDate
 
 /**
  * KafkaPosterApplication

@@ -1,10 +1,10 @@
 package no.nav.kafka.dialog
 
 import com.google.gson.reflect.TypeToken
-import java.lang.reflect.Type
 import mu.KotlinLogging
 import org.http4k.core.Response
 import org.http4k.core.Status
+import java.lang.reflect.Type
 
 /**
  * Please refer to
@@ -25,10 +25,10 @@ data class SFsObjectRest(
 
     companion object {
         fun fromJson(data: String): SFsObjectRest = runCatching { gson.fromJson(data, SFsObjectRest::class.java) as SFsObjectRest/*json.parse(serializer(), data)*/ }
-                .onFailure {
-                    log.error { "Parsing of SFsObjectRest request failed - ${it.localizedMessage}" }
-                }
-                .getOrDefault(SFsObjectRest(true, emptyList()))
+            .onFailure {
+                log.error { "Parsing of SFsObjectRest request failed - ${it.localizedMessage}" }
+            }
+            .getOrDefault(SFsObjectRest(true, emptyList()))
     }
 }
 
@@ -56,19 +56,21 @@ data class SFObjectError(
 )
 
 fun Response.isSuccess(): Boolean = when (status) {
-    Status.OK -> try {
-        val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.getType()
-        val parsedResult = gson.fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
-        // Salesforce gives 200 OK independent of successful posting of records or not, need to check response value
-        if (parsedResult.count() == 0) {
-            log.error { "Posting response has no status object successes" }
-            false
-        } else if (parsedResult.all { it.success }) {
-            true
-        } else {
-            log.error { "Posting of at least one record failed" }
-            false
-        } } catch (e: Exception) {
+    Status.OK ->
+        try {
+            val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.getType()
+            val parsedResult = gson.fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
+            // Salesforce gives 200 OK independent of successful posting of records or not, need to check response value
+            if (parsedResult.count() == 0) {
+                log.error { "Posting response has no status object successes" }
+                false
+            } else if (parsedResult.all { it.success }) {
+                true
+            } else {
+                log.error { "Posting of at least one record failed" }
+                false
+            }
+        } catch (e: Exception) {
             log.error { "Post status parse error" }
             false
         }

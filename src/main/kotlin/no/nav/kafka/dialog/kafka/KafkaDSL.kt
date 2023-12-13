@@ -4,9 +4,6 @@ import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClientConfig
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
-import java.time.Duration
-import java.util.Properties
-import kotlin.Exception
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.ErrorState
 import no.nav.kafka.dialog.metrics.KConsumerMetrics
@@ -25,6 +22,9 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.StringDeserializer
+import java.time.Duration
+import java.util.Properties
+import kotlin.Exception
 
 private val log = KotlinLogging.logger {}
 
@@ -230,8 +230,10 @@ open class AKafkaConsumer<K, V>(
                             if (cRecords.count() > 0) {
                                 kafkaConsumerOffsetRangeBoard["$currentConsumerMessageHost$POSTFIX_FAIL"] = Pair(cRecords.first().offset(), cRecords.last().offset())
                             }
-                            log.error { "Failure during commit, MsgHost: $currentConsumerMessageHost, leaving - ${e.message}, Exception name: ${e.javaClass.name}\n" +
-                                    "MsgBoard: $kafkaConsumerOffsetRangeBoard" }
+                            log.error {
+                                "Failure during commit, MsgHost: $currentConsumerMessageHost, leaving - ${e.message}, Exception name: ${e.javaClass.name}\n" +
+                                    "MsgBoard: $kafkaConsumerOffsetRangeBoard"
+                            }
                             if (e.message?.contains("rebalanced") == true) {
                                 log.error { "Detected rebalance/time between polls exception." } // might be due to rotation of kafka certificates
                                 kCommonMetrics.commitErrorTimeBetweenPolls.inc()
@@ -252,8 +254,10 @@ open class AKafkaConsumer<K, V>(
                         Pollstate.FAILURE
                     }
                     KafkaConsumerStates.IsFinished -> {
-                        log.info { "Consumer finished, leaving\n" +
-                                "MsgBoard: $kafkaConsumerOffsetRangeBoard" }
+                        log.info {
+                            "Consumer finished, leaving\n" +
+                                "MsgBoard: $kafkaConsumerOffsetRangeBoard"
+                        }
                         Pollstate.FINISHED
                     }
                 }
