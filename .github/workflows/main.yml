@@ -6,9 +6,9 @@ jobs:
   build-deploy:
     uses: ./.github/workflows/workflow.yml
     permissions:
-      packages: 'write'
-      contents: 'read'
+      contents: write
+      id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-sykefravarsstatistikk-virksomhet
-      DEPLOY_CLUSTER: dev-gcp
+      DEPLOY_APP: sf-arbeidsgiveraktivitet
+      DEPLOY_CLUSTER: dev-fss

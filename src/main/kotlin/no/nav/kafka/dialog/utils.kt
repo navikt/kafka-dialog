@@ -2,13 +2,6 @@ package no.nav.kafka.dialog
 
 import com.google.gson.Gson
 import io.prometheus.client.Histogram
-import java.io.File
-import java.net.URI
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -21,6 +14,13 @@ import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
+import java.io.File
+import java.net.URI
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import kotlin.streams.toList
 
 private val log = KotlinLogging.logger { }
 
@@ -33,25 +33,29 @@ fun ApacheClient.supportProxy(httpsProxy: String): HttpHandler = httpsProxy.let 
         p.isEmpty() -> this()
         else -> {
             val up = URI(p)
-            this(client =
-            HttpClients.custom()
-                .setDefaultRequestConfig(
-                    RequestConfig.custom()
-                        .setProxy(HttpHost(up.host, up.port, up.scheme))
-                        .setRedirectsEnabled(false)
-                        .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
-                        .build())
-                .build()
+            this(
+                client =
+                    HttpClients.custom()
+                        .setDefaultRequestConfig(
+                            RequestConfig.custom()
+                                .setProxy(HttpHost(up.host, up.port, up.scheme))
+                                .setRedirectsEnabled(false)
+                                .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
+                                .build()
+                        )
+                        .build()
             )
         }
     }
 }
 
 fun HttpHandler.measure(r: Request, m: Histogram): Response =
-    m.startTimer().let { rt -> this(r).also {
-        rt.observeDuration() // Histogram will store response time
-        File("/tmp/lastTokenCall").writeText("uri: ${r.uri}, method: ${r.method}, body: ${r.body}, headers ${r.headers}")
-    } }
+    m.startTimer().let { rt ->
+        this(r).also {
+            rt.observeDuration() // Histogram will store response time
+            File("/tmp/lastTokenCall").writeText("uri: ${r.uri}, method: ${r.method}, body: ${r.body}, headers ${r.headers}")
+        }
+    }
 
 fun ByteArray.encodeB64(): String = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(this)
 fun String.encodeB64UrlSafe(): String = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(this.toByteArray())

@@ -9,76 +9,51 @@ on:
       DEPLOY_CLUSTER:
         required: true
         type: string
-env:
-  IMAGE: ghcr.io/${{ github.repository }}/kafka-dialog:${{ github.sha }}
 jobs:
   test:
-    name: ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }} - Run tests
+    name: Run tests - ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
           java-version: 11
-          distribution: 'zulu'
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-cache-${{ hashFiles('build.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-cache-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
+          distribution: zulu
       - name: Build and run tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew clean build
+        run: ./gradlew test
   build:
     name: Build and push Docker container
     needs: test
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      packages: 'write'
-      contents: 'read'
+      contents: write
+      id-token: write
+    outputs:
+      image: ${{ steps.docker-push.outputs.image }}
     steps:
       - uses: actions/checkout@v3
-      - uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-java@v3
         with:
           java-version: 11
-          distribution: 'zulu'
-      - uses: actions/cache@v3
+          distribution: zulu
+      - name: Setup Gradle to generate and submit dependency graphs
+        uses: gradle/gradle-build-action@v2.10.0
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-cache-${{ hashFiles('build.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-cache-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
+          dependency-graph: generate-and-submit
       - name: Build JAR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew clean build shadowJar -x test
       - name: Build and publish Docker image
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          docker build . --pull --tag ${IMAGE}
-          echo "$GITHUB_TOKEN" | docker login --username "$GITHUB_REPOSITORY" --password-stdin https://docker.pkg.github.com
-          docker push ${IMAGE}
+        uses: nais/docker-build-push@v0
+        id: docker-push
+        with:
+          team: team-dialog
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
   deploy:
     name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
     needs: build
@@ -91,4 +66,4 @@ jobs:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
           RESOURCE: .nais/${{ inputs.DEPLOY_APP }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ env.IMAGE }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}
+          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}

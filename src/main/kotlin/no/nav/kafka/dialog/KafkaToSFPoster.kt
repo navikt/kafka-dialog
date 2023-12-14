@@ -1,11 +1,11 @@
 package no.nav.kafka.dialog
 
-import java.io.File
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.Metrics
 import no.nav.kafka.dialog.metrics.kCommonMetrics
 import no.nav.kafka.dialog.metrics.numberOfWorkSessionsWithoutEvents
 import org.apache.avro.generic.GenericRecord
+import java.io.File
 
 /**
  * KafkaToSFPoster
@@ -74,19 +74,29 @@ class KafkaToSFPoster<K, V>(
                     cRecordsPreFilter.forEach { kCommonMetrics.latestConsumedOffset.labels(it.partition().toString()).set(it.offset().toDouble()) }
 
                     val kafkaData = cRecordsPreFilter.map {
-                        KafkaData(topic = it.topic(), offset = it.offset(), partition = it.partition(), key = it.key().toString(),
-                            value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()), originValue = it.value().toString())
+                        KafkaData(
+                            topic = it.topic(),
+                            offset = it.offset(),
+                            partition = it.partition(),
+                            key = it.key().toString(),
+                            value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()),
+                            originValue = it.value().toString()
+                        )
                     }.filter { filter == null || filter!!(it.value, it.offset).also { if (!it) Metrics.blockedByFilter.inc() } }.toList()
 
                     kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - kafkaData.size).toDouble())
                     consumedInCurrentRun += kafkaData.size
                     if (sample && samples > 0) {
-                        kafkaData.forEach { if (samples > 0) {
-                            File("/tmp/samples").appendText("KEY: ${it.key}\nVALUE: ${it.value}" +
-                                    (if (modifier != null) "\nORIGIN VALUE: ${it.originValue}" else "") + "\n\n")
-                            samples--
-                            log.info { "Saved sample. Samples left: $samples" }
-                        } }
+                        kafkaData.forEach {
+                            if (samples > 0) {
+                                File("/tmp/samples").appendText(
+                                    "KEY: ${it.key}\nVALUE: ${it.value}" +
+                                        (if (modifier != null) "\nORIGIN VALUE: ${it.originValue}" else "") + "\n\n"
+                                )
+                                samples--
+                                log.info { "Saved sample. Samples left: $samples" }
+                            }
+                        }
                     }
                     val body = SFsObjectRest(
                         records = kafkaData.map {
