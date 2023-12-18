@@ -10,5 +10,5 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-sykefravarsstatistikk-metadata
-      DEPLOY_CLUSTER: dev-gcp
+      DEPLOY_APP: sf-sykefravarsstatistikk-bransje
+      DEPLOY_CLUSTER: prod-gcp
