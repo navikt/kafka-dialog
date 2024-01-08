@@ -44,7 +44,7 @@ spec:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
     - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE, LIMIT_ON_DATES
-      value: SAMPLE, ENCODE_KEY, FROM_BEGINNING
+      value: SAMPLE, ENCODE_KEY
     - name: ACTIVE_DATES
       value: 2023-12-20
     - name: KAFKA_POLL_DURATION
