@@ -12,7 +12,7 @@ class ReplaceNumbersWithInstantsTest {
 
         Assertions.assertEquals(
             "{\"number\":\"$knownInstant\"}",
-            replaceNumbersWithInstants("{\"number\":$instantAsEpochMillis}", 0L)
+            replaceNumbersWithInstants("{\"number\":$instantAsEpochMillis}", 0, 0L)
         )
     }
 
@@ -22,6 +22,7 @@ class ReplaceNumbersWithInstantsTest {
             """{"someText":"text","aStringNumber":"1234567","number":"1970-01-01T00:20:34.567Z","aBoolean":true}""",
             replaceNumbersWithInstants(
                 """{"someText":"text","aStringNumber":"1234567","number":1234567,"aBoolean":true}""",
+                0,
                 1L
             )
         )

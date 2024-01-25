@@ -11,6 +11,7 @@ class FilterOnActivityCodesTest {
             filterOnActivityCodes(
                 "{\"aktivitetskode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetskode}\"" +
                     ",\"aktivitetsgruppekode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetsgruppekode}\"}",
+                0,
                 0L
             )
         )
@@ -20,6 +21,7 @@ class FilterOnActivityCodesTest {
             filterOnActivityCodes(
                 "{\"aktivitetskode\":\"NOT_A_VALID_CODE\"" +
                     ",\"aktivitetsgruppekode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetsgruppekode}\"}",
+                0,
                 0L
             )
         )
@@ -29,6 +31,7 @@ class FilterOnActivityCodesTest {
             filterOnActivityCodes(
                 "{\"aktivitetskode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetskode}\"" +
                     ",\"aktivitetsgruppekode\":\"NOT_A_VALID_CODE\"}",
+                0,
                 0L
             )
         )
