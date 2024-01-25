@@ -12,8 +12,8 @@ import java.time.LocalDate
  */
 class KafkaPosterApplication<K, V>(
     val settings: List<KafkaToSFPoster.Settings> = listOf(),
-    modifier: ((String, Long) -> String)? = null,
-    filter: ((String, Long) -> Boolean)? = null
+    modifier: ((String, Int, Long) -> String)? = null,
+    filter: ((String, Int, Long) -> Boolean)? = null
 ) : App {
     val poster = KafkaToSFPoster<K, V>(settings, modifier, filter)
 

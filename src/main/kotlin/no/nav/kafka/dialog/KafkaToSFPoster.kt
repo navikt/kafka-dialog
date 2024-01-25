@@ -16,8 +16,8 @@ import java.io.File
  */
 class KafkaToSFPoster<K, V>(
     val settings: List<Settings> = listOf(),
-    val modifier: ((String, Long) -> String)? = null,
-    val filter: ((String, Long) -> Boolean)? = null
+    val modifier: ((String, Int, Long) -> String)? = null,
+    val filter: ((String, Int, Long) -> Boolean)? = null
 ) {
     private val log = KotlinLogging.logger { }
 
@@ -79,10 +79,10 @@ class KafkaToSFPoster<K, V>(
                             offset = it.offset(),
                             partition = it.partition(),
                             key = it.key().toString(),
-                            value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.offset()),
+                            value = if (modifier == null) it.value().toString() else modifier.invoke(it.value().toString(), it.partition(), it.offset()),
                             originValue = it.value().toString()
                         )
-                    }.filter { filter == null || filter!!(it.value, it.offset).also { if (!it) Metrics.blockedByFilter.inc() } }.toList()
+                    }.filter { filter == null || filter!!(it.value, it.partition, it.offset).also { if (!it) Metrics.blockedByFilter.inc() } }.toList()
 
                     kCommonMetrics.noOfEventsBlockedByFilter.inc((cRecordsPreFilter.count() - kafkaData.size).toDouble())
                     consumedInCurrentRun += kafkaData.size
@@ -107,7 +107,7 @@ class KafkaToSFPoster<K, V>(
                             )
                         }
                     ).toJson()
-                    if (noPost) {
+                    if (noPost || kafkaData.isEmpty()) {
                         KafkaConsumerStates.IsOk
                     } else {
                         when (postActivities(body).isSuccess()) {

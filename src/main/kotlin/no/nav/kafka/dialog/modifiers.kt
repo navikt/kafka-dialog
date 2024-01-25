@@ -18,7 +18,7 @@ import java.time.Instant
  *
  * Given a json-string - remove properties.adtext if present
  */
-fun removeAdTextProperty(input: String, offset: Long): String {
+fun removeAdTextProperty(input: String, partition: Int, offset: Long): String {
     try {
         val obj = JsonParser.parseString(input) as JsonObject
         if (obj.has("properties")) {
@@ -28,7 +28,7 @@ fun removeAdTextProperty(input: String, offset: Long): String {
         }
         return obj.toString()
     } catch (e: Exception) {
-        throw RuntimeException("Unable to parse event to remove adtext property, offset $offset, message: ${e.message}")
+        throw RuntimeException("Unable to parse event to remove adtext property, partition $partition, offset $offset, message: ${e.message}")
     }
 }
 
@@ -37,7 +37,7 @@ fun removeAdTextProperty(input: String, offset: Long): String {
  *
  * Given a json-string with Numbers in the first level of json - replace those with Instants
  */
-fun replaceNumbersWithInstants(input: String, offset: Long): String {
+fun replaceNumbersWithInstants(input: String, partition: Int, offset: Long): String {
     try {
         val obj = JsonParser.parseString(input) as JsonObject
         obj.keySet().forEach {
@@ -49,21 +49,21 @@ fun replaceNumbersWithInstants(input: String, offset: Long): String {
         }
         return obj.toString()
     } catch (e: Exception) {
-        throw RuntimeException("Unable to replace longs to instants in modifier, offset $offset, message ${e.message}")
+        throw RuntimeException("Unable to replace longs to instants in modifier, partition $partition, offset $offset, message ${e.message}")
     }
 }
 
 val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
 
-fun lookUpArenaActivityDetails(input: String, offset: Long): String {
+fun lookUpArenaActivityDetails(input: String, partition: Int, offset: Long): String {
     lateinit var response: Response
     var aktivitetsId: Long
     try {
         val obj = JsonParser.parseString(input) as JsonObject
         aktivitetsId = (if (obj.has("after")) obj["after"] else obj["before"]).asJsonObject.get("AKTIVITET_ID").asLong
     } catch (e: Exception) {
-        File("/tmp/lookUpArenaActivityDetailsParseInputException").writeText("offset:$offset\ninput:$input\n$e")
-        throw RuntimeException("Unable to lookup activity details, offset $offset", e)
+        File("/tmp/lookUpArenaActivityDetailsParseInputException").writeText("partition:$partition,offset:$offset\ninput:$input\n$e")
+        throw RuntimeException("Unable to lookup activity details, partition $partition, offset $offset", e)
     }
     try {
         val client = lookUpApacheClient.value
@@ -78,12 +78,12 @@ fun lookUpArenaActivityDetails(input: String, offset: Long): String {
             File("/tmp/inputAtNoContentFromArena").writeText(input)
             return """{"aktivitetskode":"NO_CONTENT","aktivitetsgruppekode":"NO_CONTENT"}"""
         } else if (response.status != Status.OK) {
-            File("/tmp/arenaResponseUnsuccessful").writeText("At offset: $offset\n" + response.toMessage())
-            throw RuntimeException("Unsuccessful response from Arena at lookup, offset $offset")
+            File("/tmp/arenaResponseUnsuccessful").writeText("At partition $partition, offset: $offset\n" + response.toMessage())
+            throw RuntimeException("Unsuccessful response from Arena at lookup, partition $partition, offset $offset")
         }
         return response.bodyString()
     } catch (e: Exception) {
-        File("/tmp/lookUpArenaActivityDetailsException").writeText("offset:$offset\ninput:$input\nresponse:\n${response.toMessage()}\nException:$e")
-        throw RuntimeException("Unable to lookup activity details, offset $offset, message ${e.message}")
+        File("/tmp/lookUpArenaActivityDetailsException").writeText("partition$partition,offset:$offset\ninput:$input\nresponse:\n${response.toMessage()}\nException:$e")
+        throw RuntimeException("Unable to lookup activity details, partition $partition, offset $offset, message ${e.message}")
     }
 }
