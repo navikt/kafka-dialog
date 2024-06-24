@@ -3,12 +3,30 @@ name: Configure and run workflow
 on: [push, pull_request]
 
 jobs:
+  setup-matrix: # enable running build-deploy for .nais/*/ in parallel
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Matrix
+        id: set-matrix
+        run: |
+          matrix=(.nais/*/)
+          matrix=("${matrix[@]%/}")
+          matrix=("${matrix[@]#.nais/}")
+          json=$(jq -c -n '{app: $ARGS.positional}' --args "${matrix[@]}")
+          echo "::set-output name=matrix::$json"
   build-deploy:
+    strategy:
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
     uses: ./.github/workflows/workflow.yml
     permissions:
       contents: write
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-arbeidsgiveraktivitet
+      DEPLOY_APP: ${{ matrix.app }}
       DEPLOY_CLUSTER: prod-fss
