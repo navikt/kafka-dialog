@@ -32,4 +32,4 @@ jobs:
     secrets: inherit
     with:
       DEPLOY_APP: ${{ matrix.app }}
-      DEPLOY_CLUSTER: prod-fss
+      DEPLOY_CLUSTER: dev-fss
