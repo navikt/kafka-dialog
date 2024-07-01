@@ -15,7 +15,6 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          set -x
           matrix=(.nais/*/)
           matrix=("${matrix[@]%/}")
           matrix=("${matrix[@]#.nais/}")
