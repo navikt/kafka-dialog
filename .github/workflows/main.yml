@@ -15,12 +15,30 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          matrix=(.nais/*/)
-          matrix=("${matrix[@]%/}")
-          matrix=("${matrix[@]#.nais/}")
-          json=$(jq -c -n '{app: $ARGS.positional}' --args "${matrix[@]}")
+          shopt -s nullglob
+          appdirs=(.nais/*/)
+          apps=("${appdirs[@]%/}")
+          apps=("${apps[@]#.nais/}")
+          declare -a appcluster
+          i=0
+          for app in "${apps[@]}"; do
+            devcluster= prodcluster=
+            for cluster in .nais/"$app"/*.yaml; do
+              cluster=${cluster##*/}
+              cluster=${cluster%.yaml}
+              case $cluster in
+                dev-*) devcluster=$cluster ;;
+                prod-*) prodcluster=$cluster ;;
+                *) printf 'Unknown cluster encountered: %s\n' "$cluster" >&2
+              esac
+            done
+            printf -v "appcluster[$((i++))]" '{"name":"%s","devcluster":"%s","prodcluster":"%s"}' \
+              "$app" "$devcluster" "$prodcluster"
+          done
+          json=$(jq -c -n '{app: $ARGS.positional}' --jsonargs "${appcluster[@]}")
           echo "::set-output name=matrix::$json"
-  build-deploy:
+  build-deploy-dev:
+    if: github.ref != 'refs/heads/main'
     needs:
       - setup-matrix
     strategy:
@@ -31,5 +49,19 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: ${{ matrix.app }}
-      DEPLOY_CLUSTER: dev-fss
+      DEPLOY_APP: ${{ matrix.app.name }}
+      DEPLOY_CLUSTER: ${{ matrix.app.devcluster }}
+  build-deploy-prod:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs:
+      - setup-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    uses: ./.github/workflows/workflow.yml
+    permissions:
+      contents: write
+      id-token: write
+    secrets: inherit
+    with:
+      DEPLOY_APP: ${{ matrix.app.name }}
+      DEPLOY_CLUSTER: ${{ matrix.app.prodcluster }}
