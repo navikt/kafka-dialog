@@ -1,4 +1,4 @@
-name: Configure and run workflow
+name: Configure and run workflows
 
 on: [push, pull_request]
 

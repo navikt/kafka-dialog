@@ -12,18 +12,13 @@ on:
       IMAGE:
         required: true
         type: string
+
 jobs:
-  echo:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "Going to deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }} from ${{ inputs.IMAGE }}"
   deploy:
     name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
     permissions:
       id-token: write
       contents: read
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
