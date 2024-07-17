@@ -1,6 +1,11 @@
 name: Build and push
 
-on: workflow_call
+on:
+  workflow_call:
+    outputs:
+      image:
+        description: Output from docker push
+        value: ${{ jobs.build-push.outputs.image }}
 
 jobs:
   test:
