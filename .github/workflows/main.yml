@@ -3,7 +3,13 @@ name: Configure and run workflow
 on: [push, pull_request]
 
 jobs:
-  setup-matrix: # enable running build-deploy for .nais/*/ in parallel
+  build-push:
+    uses: ./.github/workflows/build-push.yml
+    permissions:
+      contents: write
+      id-token: write
+    secrets: inherit
+  setup-matrix: # enable running deploy for .nais/*/ in parallel
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -29,39 +35,43 @@ jobs:
               case $cluster in
                 dev-*) devcluster=$cluster ;;
                 prod-*) prodcluster=$cluster ;;
-                *) printf 'Unknown cluster encountered: %s\n' "$cluster" >&2
+                *) printf 'Unknown cluster encountered: %s\n' "$cluster" >&2; exit 1
               esac
             done
-            printf -v "appcluster[$((i++))]" '{"name":"%s","devcluster":"%s","prodcluster":"%s"}' \
+            printf -v "appcluster[$((i++))]" '{"name":"%s","dev-cluster":"%s","prod-cluster":"%s"}' \
               "$app" "$devcluster" "$prodcluster"
           done
           json=$(jq -c -n '{app: $ARGS.positional}' --jsonargs "${appcluster[@]}")
           echo "::set-output name=matrix::$json"
-  build-deploy-dev:
-    if: github.ref != 'refs/heads/main'
+  deploy-dev: # run on branches _other_ than main
+    if: github.event_name != 'pull_request' && github.ref != 'refs/heads/main'
     needs:
       - setup-matrix
+      - build-push
     strategy:
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
-    uses: ./.github/workflows/workflow.yml
+    uses: ./.github/workflows/deploy.yml
     permissions:
       contents: write
       id-token: write
     secrets: inherit
     with:
       DEPLOY_APP: ${{ matrix.app.name }}
-      DEPLOY_CLUSTER: ${{ matrix.app.devcluster }}
-  build-deploy-prod:
+      DEPLOY_CLUSTER: ${{ matrix.app.dev-cluster }}
+      IMAGE: ${{ needs.build-push.outputs.image }}
+  deploy-prod: # run only on main
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs:
       - setup-matrix
+      - build-push
     strategy:
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
-    uses: ./.github/workflows/workflow.yml
+    uses: ./.github/workflows/deploy.yml
     permissions:
       contents: write
       id-token: write
     secrets: inherit
     with:
       DEPLOY_APP: ${{ matrix.app.name }}
-      DEPLOY_CLUSTER: ${{ matrix.app.prodcluster }}
+      DEPLOY_CLUSTER: ${{ matrix.app.prod-cluster }}
+      IMAGE: ${{ needs.build-push.outputs.image }}

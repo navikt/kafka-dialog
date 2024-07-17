@@ -1,0 +1,34 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      DEPLOY_APP:
+        required: true
+        type: string
+      DEPLOY_CLUSTER:
+        required: true
+        type: string
+      IMAGE:
+        required: true
+        type: string
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Going to deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }} from ${{ inputs.IMAGE }}"
+  deploy:
+    name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
+    permissions:
+      id-token: write
+      contents: read
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
+          RESOURCE: .nais/${{ inputs.DEPLOY_APP }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
+          VAR: image=${{ inputs.IMAGE }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}

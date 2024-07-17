@@ -1,17 +1,10 @@
-name: Build, push, and deploy
+name: Build and push
 
-on:
-  workflow_call:
-    inputs:
-      DEPLOY_APP:
-        required: true
-        type: string
-      DEPLOY_CLUSTER:
-        required: true
-        type: string
+on: workflow_call
+
 jobs:
   test:
-    name: Run tests - ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +16,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew test
-  build:
+  build-push:
     name: Build and push Docker container
     needs: test
     if: github.event_name != 'pull_request'
@@ -55,18 +48,3 @@ jobs:
           image_suffix: ${{ inputs.DEPLOY_APP }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-  deploy:
-    name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
-          RESOURCE: .nais/${{ inputs.DEPLOY_APP }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}
