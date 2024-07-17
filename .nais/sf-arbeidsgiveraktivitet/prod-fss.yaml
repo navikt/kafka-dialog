@@ -1,13 +1,13 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: {{ DEPLOY_APP }}
+  name: "{{ DEPLOY_APP }}"
   namespace: team-dialog
   labels:
     team: team-dialog
 spec:
   webproxy: true
-  image: {{ image }}
+  image: "{{ image }}"
   port: 8080
   replicas:
     min: 1
@@ -48,7 +48,7 @@ spec:
     - name: KAFKA_POLL_DURATION
       value: '10000'
     - name: KAFKA_CLIENTID
-      value: {{ DEPLOY_APP }}
+      value: "{{ DEPLOY_APP }}"
     - name: KAFKA_TOPIC
       value: teamarenanais.aapen-arena-arbeidsgiveraktivitetendret-v1
     - name: MS_BETWEEN_WORK
@@ -58,6 +58,6 @@ spec:
     - name: ARENA_HOST
       value: 'https://arena-ords.intern.nav.no'
     - name: DEPLOY_APP
-      value: {{ DEPLOY_APP }}
+      value: "{{ DEPLOY_APP }}"
     - name: DEPLOY_CLUSTER
-      value: {{ DEPLOY_CLUSTER }}
+      value: "{{ DEPLOY_CLUSTER }}"
