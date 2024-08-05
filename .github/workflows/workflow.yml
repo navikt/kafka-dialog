@@ -54,18 +54,41 @@ jobs:
           team: team-dialog
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-  deploy:
-    name: Deploy ${{ inputs.DEPLOY_APP }} to ${{ inputs.DEPLOY_CLUSTER }}
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+  setup-matrix:
+    name: Set up matrix for deployment
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
+      - name: Set up matrix
+        id: set-matrix
+        run: |
+          if [ "${{ inputs.DEPLOY_APP }}" == "ALL" ]; then
+            apps=$(find ./.nais -name "${{ inputs.DEPLOY_CLUSTER }}.yaml" -exec dirname {} \; | xargs -n 1 basename)
+            matrix_config=$(printf '%s\n' "$apps" | jq -R -s -c 'split("\n")[:-1] | map({app: .})')
+          else
+            matrix_config=$(printf '%s\n' "${{ inputs.DEPLOY_APP }}" | jq -R -s -c 'split("\n")[:-1] | map({app: .})')
+          fi
+          echo "Matrix config ${matrix_config}"
+          echo "matrix=$matrix_config" >> $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+  deploy:
+    name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
+    needs: [build, setup-matrix]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        target: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
+        uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
-          RESOURCE: .nais/${{ inputs.DEPLOY_APP }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}
+          RESOURCE: .nais/${{ matrix.target.app }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
+          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ matrix.target.app }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}
