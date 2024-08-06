@@ -10,5 +10,5 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-dialogmote          # use ALL to deploy all apps in cluster
+      DEPLOY_APP: sf-ia-behovsvurdering          # use ALL to deploy all apps in cluster
       DEPLOY_CLUSTER: dev-gcp
