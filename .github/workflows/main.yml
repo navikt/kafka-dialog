@@ -10,5 +10,25 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-dialogmote          # use ALL to deploy all apps in cluster
+      DEPLOY_APP: sf-dialogmote       # use ALL to deploy all apps in cluster
       DEPLOY_CLUSTER: dev-gcp
+
+      # Start consuming from a particular offset
+      # Note that the consumer will go there each time the pod reboots, so make sure you turn this off once done
+      FLAG_SEEK: false
+
+      # Where to go if flag seek is set. Will seek to next offset that exists on queue, i.e '0' equals 'from beginning'
+      SEEK_OFFSET: '0'
+
+      # How many samples should be stored. Will sample first ones that passes filter.
+      NUMBER_OF_SAMPLES: '5'
+
+      # To not post any records to salesforce - dry run
+      FLAG_NO_POST: true
+
+      # To run only one work session - ie when no more records found - stop polling for more during lifetime of app
+      FLAG_RUN_ONCE: false
+
+      # To add -alt postfix to client id - will look like an alter ego to kafka cluster. Useful for doing an operation
+      # and then switching off to return to previous position.
+      FLAG_ALT_ID: false

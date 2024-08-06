@@ -1,63 +1,70 @@
-apiVersion: "nais.io/v1alpha1"
-kind: "Application"
+apiVersion: nais.io/v1alpha1
+kind: Application
 metadata:
-  name: {{ DEPLOY_APP }}
+  name: "{{ DEPLOY_APP }}"
   namespace: team-dialog
   labels:
     team: team-dialog
 spec:
-  webproxy: true
-  image: {{ image }}
-  port: 8080
+  webproxy: true # on fss use webproxy for calls
+  image: '{{ image }}'
   replicas:
     min: 1
     max: 1
   liveness:
-    path: /isAlive
-    initialDelay: 5
-    periodSeconds: 5
-    failureThreshold: 30
+    path: /internal/isAlive
   readiness:
-    path: /isReady
-    initialDelay: 5
-    periodSeconds: 5
-    failureThreshold: 30
+    path: /internal/isReady
   prometheus:
     enabled: true
-    path: /metrics
+    path: /internal/metrics
   resources:
     limits:
       memory: 4096Mi
     requests:
-      cpu: 10m
-      memory: 512Mi
+      cpu: 5m
+      memory: 256Mi
   accessPolicy:
     outbound:
       external:
         - host: login.salesforce.com
         - host: navdialog.my.salesforce.com
   envFrom:
-    - secret: sf-dialog
-  filesFrom:
-    - secret: sf-dialog
+    - secret: kafka-integrasjon-po-arbeidsgiver
   kafka:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
-    - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: SAMPLE
-    - name: KAFKA_POLL_DURATION
-      value: '10000'
-    - name: KAFKA_CLIENTID
-      value: {{ DEPLOY_APP }}
     - name: KAFKA_TOPIC
       value: teamarenanais.aapen-arena-arbeidsgiveraktivitetendret-v1
-    - name: MS_BETWEEN_WORK
-      value: '600000' # 10 min
-    - name: SF_TOKENHOST
-      value: https://login.salesforce.com
     - name: ARENA_HOST
       value: 'https://arena-ords.intern.nav.no'
+    - name: MS_BETWEEN_WORK
+      value: '600000'
+    - name: KAFKA_POLL_DURATION
+      value: '10000'
+    - name: SF_TOKENHOST
+      value: https://login.salesforce.com
+    - name: KAFKA_CLIENT_ID
+      value: "{{ DEPLOY_APP }}"
+    - name: MESSAGE_ENCODING
+      value: PLAIN # PLAIN, AVRO, AVRO_VALUE_ONLY
+    - name: ENCODE_KEY
+      value: 'false'
+    - name: LIMIT_ON_DATES
+      value: 'false'
     - name: DEPLOY_APP
-      value: {{ DEPLOY_APP }}
+      value: "{{ DEPLOY_APP }}"
     - name: DEPLOY_CLUSTER
-      value: {{ DEPLOY_CLUSTER }}
+      value: "{{ DEPLOY_CLUSTER }}"
+    - name: FLAG_SEEK
+      value: '{{ FLAG_SEEK }}'
+    - name: SEEK_OFFSET # Only applied if flag SEEK is set (currently assuming one partition)
+      value: '{{ SEEK_OFFSET }}'
+    - name: NUMBER_OF_SAMPLES
+      value: '{{ NUMBER_OF_SAMPLES }}'
+    - name: FLAG_NO_POST
+      value: '{{ FLAG_NO_POST }}'
+    - name: FLAG_RUN_ONCE
+      value: '{{ FLAG_RUN_ONCE }}'
+    - name: FLAG_ALT_ID
+      value: '{{ FLAG_ALT_ID }}'

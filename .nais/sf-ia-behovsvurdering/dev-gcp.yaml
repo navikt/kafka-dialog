@@ -1,0 +1,4 @@
+spec:
+  env:
+    - name: KAFKA_TOPIC
+      value: pia.fullfort-behovsvurdering-v1
