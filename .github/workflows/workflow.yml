@@ -36,7 +36,6 @@ jobs:
       ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
       ${{ inputs.FLAG_RUN_ONCE && ' - RUN_ONCE' || '' }}
       ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
-    needs: run-info
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
