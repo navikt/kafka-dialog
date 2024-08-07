@@ -7,6 +7,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 
 typealias Filter = ((ConsumerRecord<String, String?>) -> Boolean)
 
+enum class FilterSetting(val filter: Filter?) {
+    NONE(null),
+    FILTER_ON_ACTIVITY_CODES(filterOnActivityCodes)
+}
+
 /**
  * Not in use, but kept for reference - only approve json with tiltakstype == "MIDLERTIDIG_LONNSTILSKUDD"
  */

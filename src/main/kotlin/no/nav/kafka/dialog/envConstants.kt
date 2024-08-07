@@ -33,6 +33,8 @@ const val config_ACTIVE_DATES = "ACTIVE_DATES"
 const val config_MESSAGE_ENCODING = "MESSAGE_ENCODING"
 const val config_ENCODE_KEY = "ENCODE_KEY"
 const val config_ARENA_HOST = "ARENA_HOST"
+const val config_FILTER = "FILTER"
+const val config_MODIFIER = "MODIFIER"
 
 // Kafka injected environment dependencies
 const val env_KAFKA_BROKERS = "KAFKA_BROKERS"

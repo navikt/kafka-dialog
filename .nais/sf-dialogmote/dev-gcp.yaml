@@ -37,6 +37,10 @@ spec:
   env:
     - name: KAFKA_TOPIC
       value: teamsykefravr.isdialogmote-dialogmote-statusendring
+    - name: FILTER
+      value: NONE
+    - name: MODIFIER
+      value: REPLACE_NUMBERS_WITH_INSTANTS
     - name: MS_BETWEEN_WORK
       value: '600000'
     - name: KAFKA_POLL_DURATION

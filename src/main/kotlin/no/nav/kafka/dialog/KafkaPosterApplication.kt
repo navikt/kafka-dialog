@@ -34,6 +34,8 @@ class KafkaPosterApplication(
     fun start() {
         log.info {
             "Starting app ${env(config_DEPLOY_APP)} - devContext $devContext - messageEncoding ${env(config_MESSAGE_ENCODING)}" +
+                (if (env(config_FILTER) != "NONE") " - FILTER ${env(config_FILTER)}" else "") +
+                (if (env(config_MODIFIER) != "NONE") " - MODIFIER ${env(config_MODIFIER)}" else "") +
                 (if (env(config_FLAG_SEEK).toBoolean()) " - SEEK ${env(config_SEEK_OFFSET).toLong()}" else "") +
                 (if (env(config_NUMBER_OF_SAMPLES).toInt() > 0) " - SAMPLE ${env(config_NUMBER_OF_SAMPLES)}" else "") +
                 (if (env(config_FLAG_NO_POST).toBoolean()) " - NO_POST" else "") +
