@@ -161,9 +161,9 @@ class KafkaToSFPoster(
     private fun sampleRecords(records: Iterable<ConsumerRecord<String, String?>>) {
         records.forEach {
             if (samplesLeft-- > 0) {
-                File("/tmp/samplesFromTopic").appendText("KEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
+                File("/tmp/samplesFromTopic").appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                 if (modifier != null) {
-                    File("/tmp/samplesAfterModifier").appendText("KEY: ${it.key()}\nVALUE: ${modifier.invoke(it)}\n\n")
+                    File("/tmp/samplesAfterModifier").appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${modifier.invoke(it)}\n\n")
                 }
                 log.info { "Saved sample. Samples left: $samplesLeft" }
             }
