@@ -1,9 +1,11 @@
-package no.nav.kafka.dialog
+package no.nav.kafka.dialog.salesforce
 
+import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import mu.KotlinLogging
 import org.http4k.core.Response
 import org.http4k.core.Status
+import java.io.File
 import java.lang.reflect.Type
 
 /**
@@ -13,30 +15,24 @@ import java.lang.reflect.Type
 
 private val log = KotlinLogging.logger { }
 
+private val gson = Gson()
+
 /**
  * The general sObject REST API for posting records of different types
  * In this case, post of KafkaMessage containing attribute refering to Salesforce custom object KafkaMessage__c
  */
 data class SFsObjectRest(
     val allOrNone: Boolean = true,
-    val records: List<KafkaMessage>
+    val records: Set<KafkaMessage>
 ) {
-    fun toJson() = gson.toJson(this)
-
-    companion object {
-        fun fromJson(data: String): SFsObjectRest = runCatching { gson.fromJson(data, SFsObjectRest::class.java) as SFsObjectRest/*json.parse(serializer(), data)*/ }
-            .onFailure {
-                log.error { "Parsing of SFsObjectRest request failed - ${it.localizedMessage}" }
-            }
-            .getOrDefault(SFsObjectRest(true, emptyList()))
-    }
+    fun toJson(): String = gson.toJson(this)
 }
 
 data class KafkaMessage(
     val attributes: SFsObjectRestAttributes = SFsObjectRestAttributes(),
     val CRM_Topic__c: String,
     val CRM_Key__c: String,
-    val CRM_Value__c: String
+    val CRM_Value__c: String?
 )
 
 data class SFsObjectRestAttributes(
@@ -58,10 +54,10 @@ data class SFObjectError(
 fun Response.isSuccess(): Boolean = when (status) {
     Status.OK ->
         try {
-            val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.getType()
-            val parsedResult = gson.fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
+            val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.type
+            val parsedResult = Gson().fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
             // Salesforce gives 200 OK independent of successful posting of records or not, need to check response value
-            if (parsedResult.count() == 0) {
+            if (parsedResult.isEmpty()) {
                 log.error { "Posting response has no status object successes" }
                 false
             } else if (parsedResult.all { it.success }) {
@@ -75,6 +71,7 @@ fun Response.isSuccess(): Boolean = when (status) {
             false
         }
     else -> {
+        File("/tmp/sf-response-not-ok").writeText(this.toMessage())
         log.error { "Post request to Salesforce failed - ${status.description}(${status.code})" }
         false
     }
