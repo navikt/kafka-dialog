@@ -28,7 +28,7 @@ on:
         required: true
         type: boolean
 jobs:
-  run-info:
+  test:
     name: >- # Displays inputs as name on job
       ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
       ${{ inputs.FLAG_SEEK && format(' - SEEK {0}', inputs.SEEK_OFFSET) || '' }}
@@ -36,14 +36,6 @@ jobs:
       ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
       ${{ inputs.FLAG_RUN_ONCE && ' - RUN_ONCE' || '' }}
       ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump github context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-  test:
-    name: Run tests - ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
     needs: run-info
     runs-on: ubuntu-latest
     steps:

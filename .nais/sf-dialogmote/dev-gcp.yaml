@@ -56,7 +56,7 @@ spec:
     - name: ENCODE_KEY
       value: 'true'
     - name: LIMIT_ON_DATES
-      value: false
+      value: 'false'
     - name: FLAG_SEEK
       value: '{{ FLAG_SEEK }}'
     - name: SEEK_OFFSET # Only applied if flag SEEK is set (currently assuming one partition)
