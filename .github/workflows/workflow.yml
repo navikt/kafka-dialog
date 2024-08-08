@@ -121,6 +121,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Build and generate merged YAML
+        run: ./gradlew mergeYamlTask
       - name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
         uses: nais/deploy/actions/deploy@v2
         env:
