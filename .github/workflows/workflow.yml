@@ -78,15 +78,12 @@ jobs:
           team: team-dialog
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-      - name: Store image reference
-        runs-on: ubuntu-latest
-        steps:
-          - name: Create image URL artifact
-            run: echo "${{ steps.build.outputs.image }}" > ./imageUrl.txt
-          - uses: actions/upload-artifact@v4
-            with:
-              name: imageUrl
-              path: ./imageUrl.txt
+      - name: Create image URL artifact
+        run: echo "${{ steps.build.outputs.image }}" > ./imageUrl.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imageUrl
+          path: ./imageUrl.txt
   setup-matrix:
     name: Set up matrix for deployment
     needs: test
@@ -106,20 +103,20 @@ jobs:
           echo "matrix=$matrix_config" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-#  store-image-reference:
-#    name: Store image reference
-#    needs: build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Create image URL artifact
-#        run: echo "${{ needs.build.outputs.image }}" > ./imageUrl.txt
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: imageUrl
-#          path: ./imageUrl.txt
+  #  store-image-reference:
+  #    name: Store image reference
+  #    needs: build
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: Create image URL artifact
+  #        run: echo "${{ needs.build.outputs.image }}" > ./imageUrl.txt
+  #      - uses: actions/upload-artifact@v4
+  #        with:
+  #          name: imageUrl
+  #          path: ./imageUrl.txt
   deploy:
     name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
-    needs: [build, setup-matrix]
+    needs: [ build, setup-matrix ]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
