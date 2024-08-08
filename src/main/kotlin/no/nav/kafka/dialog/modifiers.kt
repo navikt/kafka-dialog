@@ -16,13 +16,6 @@ import java.time.Instant
 
 typealias Modifier = ((ConsumerRecord<String, String?>) -> String?)
 
-enum class ModifierSetting(val modifier: Modifier?) {
-    NONE(null),
-    REMOVE_ADTEXT_PROPERTY(removeAdTextProperty),
-    REPLACE_NUMBERS_WITH_INSTANTS(replaceNumbersWithInstants),
-    LOOK_UP_ARENA_ACTIVITY_DETAILS(lookUpArenaActivityDetails)
-}
-
 /**
  * removeAdTextProperty
  *

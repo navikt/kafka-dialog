@@ -3,10 +3,11 @@ kind: Application
 metadata:
   name: "{{ DEPLOY_APP }}"
   namespace: team-dialog
+  labels:
+    team: team-dialog
 spec:
   webproxy: true
   image: "{{ image }}"
-  port: 8080
   replicas:
     min: 1
     max: 1

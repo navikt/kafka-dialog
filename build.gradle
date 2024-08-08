@@ -99,6 +99,7 @@ sourceSets {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     dependsOn("generateAvroJava")
+    dependsOn("mergeYamlTask")
     kotlinOptions.jvmTarget = "17"
 }
 
@@ -106,3 +107,5 @@ tasks.withType(JavaCompile) {
     sourceCompatibility = "17"
     targetCompatibility = "17"
 }
+
+apply from: 'mergeYamlTask.gradle'
