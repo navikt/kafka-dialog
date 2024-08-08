@@ -122,6 +122,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build and generate merged YAML
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew mergeYamlTask
       - name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
         uses: nais/deploy/actions/deploy@v2
