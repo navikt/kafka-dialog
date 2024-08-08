@@ -79,5 +79,5 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ github.event.inputs.DEPLOY_CLUSTER }}
-          RESOURCE: .nais/${{ github.event.inputs.DEPLOY_APP }}/${{ github.event.inputs.DEPLOY_CLUSTER }}.yaml
+          RESOURCE: .nais/${{ github.event.inputs.DEPLOY_APP }}/target/${{ github.event.inputs.DEPLOY_CLUSTER }}.yaml
           VAR: image=${{ steps.read-image-url.outputs.image_url }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_RUN_ONCE=${{ inputs.FLAG_RUN_ONCE }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}
