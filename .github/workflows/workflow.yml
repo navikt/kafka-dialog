@@ -103,17 +103,6 @@ jobs:
           echo "matrix=$matrix_config" >> $GITHUB_OUTPUT
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-  #  store-image-reference:
-  #    name: Store image reference
-  #    needs: build
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - name: Create image URL artifact
-  #        run: echo "${{ needs.build.outputs.image }}" > ./imageUrl.txt
-  #      - uses: actions/upload-artifact@v4
-  #        with:
-  #          name: imageUrl
-  #          path: ./imageUrl.txt
   deploy:
     name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
     needs: [ build, setup-matrix ]
