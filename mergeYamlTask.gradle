@@ -47,11 +47,30 @@ ext {
         }
         return result
     }
+
+    copyYaml = { String app, String env ->
+        def targetDir = file("./.nais/${app}/target")
+        targetDir.mkdirs()
+
+        // Copy the file
+        def sourceFile = file("./.nais/${app}/${env}.yaml")
+        def destinationFile = file("./.nais/${app}/target/${env}.yaml")
+
+        if (sourceFile.exists()) {
+            copy { from sourceFile into targetDir }
+            println "File copied successfully to ${destinationFile}"
+        } else {
+            println "Source file does not exist: ${sourceFile}"
+        }
+    }
 }
 
 tasks.register('mergeYamlTask') {
     doLast {
-        def environments = ['dev-fss', 'prod-fss', 'dev-gcp', 'prod-gcp']
+        copyYaml("sf-arbeidsgiveraktivitet", "dev-fss")
+        copyYaml("sf-arbeidsgiveraktivitet", "prod-fss")
+
+        def environments = ['dev-gcp', 'prod-gcp']
 
         environments.each {env ->
             def defaultFile = file("./.nais/default/${env}.yaml")
