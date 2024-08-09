@@ -44,8 +44,6 @@ spec:
       value: https://test.salesforce.com
     - name: KAFKA_CLIENT_ID
       value: '{{ DEPLOY_APP }}'
-    - name: SF_VERSION
-      value: 'v48.0'
     - name: MESSAGE_ENCODING
       value: PLAIN # PLAIN, AVRO, AVRO_VALUE_ONLY
     - name: LIMIT_ON_DATES

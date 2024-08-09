@@ -6,7 +6,7 @@ metadata:
   labels:
     team: team-dialog
 spec:
-  webproxy: true
+  webproxy: true # on fss use webproxy for calls
   image: '{{ image }}'
   port: 8080
   replicas:
@@ -29,8 +29,8 @@ spec:
     limits:
       memory: 4096Mi
     requests:
-      cpu: 10m
-      memory: 512Mi
+      cpu: 5m
+      memory: 256Mi
   accessPolicy:
     outbound:
       external:
