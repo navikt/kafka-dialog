@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: "{{ DEPLOY_APP }}"
   namespace: team-dialog
+  labels:
+    team: team-dialog
 spec:
   webproxy: true # on fss use webproxy for calls
   image: '{{ image }}'
