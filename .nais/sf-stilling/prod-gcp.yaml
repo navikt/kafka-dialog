@@ -1,61 +1,8 @@
-apiVersion: "nais.io/v1alpha1"
-kind: "Application"
-metadata:
-  name: {{ DEPLOY_APP }}
-  namespace: team-dialog
-  labels:
-    team: team-dialog
 spec:
-  webproxy: true
-  image: {{ image }}
-  port: 8080
-  replicas:
-    min: 1
-    max: 1
-  liveness:
-    path: /isAlive
-    initialDelay: 5
-    periodSeconds: 5
-    failureThreshold: 30
-  readiness:
-    path: /isReady
-    initialDelay: 5
-    periodSeconds: 5
-    failureThreshold: 30
-  prometheus:
-    enabled: true
-    path: /metrics
-  resources:
-    limits:
-      memory: 1024Mi
-    requests:
-      cpu: 10m
-      memory: 512Mi
-  accessPolicy:
-    outbound:
-      external:
-        - host: login.salesforce.com
-        - host: navdialog.my.salesforce.com
-  envFrom:
-    - secret: sf-dialog
-  filesFrom:
-    - secret: sf-dialog
-  kafka:
-    pool: nav-prod # enum of nav-dev, nav-prod
   env:
-    - name: POSTER_SETTINGS # DEFAULT, FROM_BEGINNING, NO_POST, SAMPLE, RUN_ONCE, ENCODE_KEY, AVRO_KEY_VALUE, AVRO_VALUE
-      value: SAMPLE, ENCODE_KEY, AVRO_VALUE
-    - name: KAFKA_POLL_DURATION
-      value: '10000'
-    - name: KAFKA_CLIENTID
-      value: sf-stilling
     - name: KAFKA_TOPIC
       value: teampam.stilling-ekstern-1
-    - name: MS_BETWEEN_WORK
-      value: '240000'
-    - name: SF_TOKENHOST
-      value: https://login.salesforce.com
-    - name: DEPLOY_APP
-      value: {{ DEPLOY_APP }}
-    - name: DEPLOY_CLUSTER
-      value: {{ DEPLOY_CLUSTER }}
+    - name: MESSAGE_ENCODING
+      value: AVRO_VALUE_ONLY
+    - name: ENCODE_KEY
+      value: 'true'
