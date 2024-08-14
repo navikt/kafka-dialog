@@ -31,4 +31,4 @@ jobs:
 
       # To add -alt postfix to client id - will look like an alter ego to kafka cluster. Useful for doing an operation
       # and then switching off to return to previous position.
-      FLAG_ALT_ID: false
+      FLAG_ALT_ID: true

@@ -83,6 +83,7 @@ dependencies {
     implementation "org.apache.avro:avro:1.11.3" //Desired transient avro to serializer above
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'io.mockk:mockk:1.13.8'
 }
 
 test {
