@@ -9,8 +9,20 @@ on:
         type: choice
         default: 'sf-dialogmote'
         options:
+          - 'sf-arbeidsgiveraktivitet'
           - 'sf-dialogmote'
+          - 'sf-ia-behovsvurdering'
+          - 'sf-ia-leveranse'
           - 'sf-ia-sak'
+          - 'sf-stilling'
+          - 'sf-sykefravarsstatistikk-bransje'
+          - 'sf-sykefravarsstatistikk-land'
+          - 'sf-sykefravarsstatistikk-metadata'
+          - 'sf-sykefravarsstatistikk-naring'
+          - 'sf-sykefravarsstatistikk-naringskode'
+          - 'sf-sykefravarsstatistikk-sektor'
+          - 'sf-sykefravarsstatistikk-virksomhet'
+          - 'sf-tiltak-avtale'
       DEPLOY_CLUSTER:
         description: 'Deployment Cluster'
         required: true
@@ -37,10 +49,6 @@ on:
         description: "No post"
         required: true
         type: boolean
-      FLAG_RUN_ONCE:
-        description: "Run once"
-        required: true
-        type: boolean
       FLAG_ALT_ID:
         description: "Alt Id"
         required: true
@@ -51,7 +59,6 @@ run-name: >- # Used as run-name on dispatch:
   ${{ inputs.FLAG_SEEK && format(' - SEEK {0}', inputs.SEEK_OFFSET) || '' }}
   ${{ inputs.NUMBER_OF_SAMPLES != '0' && format(' - SAMPLE {0}', inputs.NUMBER_OF_SAMPLES) || '' }}
   ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
-  ${{ inputs.FLAG_RUN_ONCE && ' - RUN_ONCE' || '' }}
   ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
 jobs:
   deploy:
@@ -80,4 +87,4 @@ jobs:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ github.event.inputs.DEPLOY_CLUSTER }}
           RESOURCE: .nais/${{ github.event.inputs.DEPLOY_APP }}/target/${{ github.event.inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ steps.read-image-url.outputs.image_url }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_RUN_ONCE=${{ inputs.FLAG_RUN_ONCE }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}
+          VAR: image=${{ steps.read-image-url.outputs.image_url }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}

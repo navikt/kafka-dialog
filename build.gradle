@@ -101,6 +101,7 @@ sourceSets {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     dependsOn("generateAvroJava")
     dependsOn("mergeYamlTask")
+    dependsOn("updateDispatchWorkflow")
     kotlinOptions.jvmTarget = "17"
 }
 
@@ -110,3 +111,4 @@ tasks.withType(JavaCompile) {
 }
 
 apply from: 'mergeYamlTask.gradle'
+apply from: 'updateDispatchWorkflow.gradle'

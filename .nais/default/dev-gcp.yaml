@@ -62,7 +62,5 @@ spec:
       value: '{{ NUMBER_OF_SAMPLES }}'
     - name: FLAG_NO_POST
       value: '{{ FLAG_NO_POST }}'
-    - name: FLAG_RUN_ONCE
-      value: '{{ FLAG_RUN_ONCE }}'
     - name: FLAG_ALT_ID
       value: '{{ FLAG_ALT_ID }}'

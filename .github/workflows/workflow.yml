@@ -21,9 +21,6 @@ on:
       FLAG_NO_POST:
         required: true
         type: boolean
-      FLAG_RUN_ONCE:
-        required: true
-        type: boolean
       FLAG_ALT_ID:
         required: true
         type: boolean
@@ -34,7 +31,6 @@ jobs:
       ${{ inputs.FLAG_SEEK && format(' - SEEK {0}', inputs.SEEK_OFFSET) || '' }}
       ${{ inputs.NUMBER_OF_SAMPLES != '0' && format(' - SAMPLE {0}', inputs.NUMBER_OF_SAMPLES) || '' }}
       ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
-      ${{ inputs.FLAG_RUN_ONCE && ' - RUN_ONCE' || '' }}
       ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
     runs-on: ubuntu-latest
     steps:
@@ -125,4 +121,4 @@ jobs:
         env:
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
           RESOURCE: .nais/${{ matrix.target.app }}/target/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ matrix.target.app }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_RUN_ONCE=${{ inputs.FLAG_RUN_ONCE }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}
+          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ matrix.target.app }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}
