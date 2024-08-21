@@ -11,4 +11,4 @@ jobs:
     secrets: inherit
     with:
       DEPLOY_APP: sf-ia-behovsvurdering          # use ALL to deploy all apps in cluster
-      DEPLOY_CLUSTER: dev-gcp
+      DEPLOY_CLUSTER: prod-gcp
