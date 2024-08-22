@@ -46,6 +46,7 @@ class WorkSessionStatisticsTest {
             workSessionStatistics.toString()
         )
         assertTrue(Prometheus.metricsAsText.contains("consumed 6.0")) // Total during lifetime
+        println(Prometheus.metricsAsText)
     }
 
     @Test
