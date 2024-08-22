@@ -1,12 +1,11 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: "{{ DEPLOY_APP }}"
+  name: '{{ DEPLOY_APP }}'
   namespace: team-dialog
   labels:
     team: team-dialog
 spec:
-  webproxy: true # on fss use webproxy for calls
   image: '{{ image }}'
   replicas:
     min: 1
@@ -35,9 +34,7 @@ spec:
     pool: nav-prod # enum of nav-dev, nav-prod
   env:
     - name: KAFKA_TOPIC
-      value: teamarenanais.aapen-arena-arbeidsgiveraktivitetendret-v1
-    - name: ARENA_HOST
-      value: 'https://arena-ords.intern.nav.no'
+      value: 'topic not specified'
     - name: MS_BETWEEN_WORK
       value: '600000'
     - name: KAFKA_POLL_DURATION
@@ -45,17 +42,17 @@ spec:
     - name: SF_TOKENHOST
       value: https://login.salesforce.com
     - name: KAFKA_CLIENT_ID
-      value: "{{ DEPLOY_APP }}"
+      value: '{{ DEPLOY_APP }}'
     - name: MESSAGE_ENCODING
       value: PLAIN # PLAIN, AVRO, AVRO_VALUE_ONLY
-    - name: ENCODE_KEY
-      value: 'false'
     - name: LIMIT_ON_DATES
       value: 'false'
+    - name: ENCODE_KEY
+      value: 'false'
     - name: DEPLOY_APP
-      value: "{{ DEPLOY_APP }}"
+      value: '{{ DEPLOY_APP }}'
     - name: DEPLOY_CLUSTER
-      value: "{{ DEPLOY_CLUSTER }}"
+      value: '{{ DEPLOY_CLUSTER }}'
     - name: FLAG_SEEK
       value: '{{ FLAG_SEEK }}'
     - name: SEEK_OFFSET # Only applied if flag SEEK is set (currently assuming one partition)

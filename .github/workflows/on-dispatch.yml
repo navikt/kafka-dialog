@@ -1,0 +1,90 @@
+name: Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      DEPLOY_APP:
+        description: 'Deployment Application'
+        required: true
+        type: choice
+        default: 'sf-dialogmote'
+        options:
+          - 'sf-arbeidsgiveraktivitet'
+          - 'sf-dialogmote'
+          - 'sf-ia-behovsvurdering'
+          - 'sf-ia-leveranse'
+          - 'sf-ia-sak'
+          - 'sf-stilling'
+          - 'sf-sykefravarsstatistikk-bransje'
+          - 'sf-sykefravarsstatistikk-land'
+          - 'sf-sykefravarsstatistikk-metadata'
+          - 'sf-sykefravarsstatistikk-naring'
+          - 'sf-sykefravarsstatistikk-naringskode'
+          - 'sf-sykefravarsstatistikk-sektor'
+          - 'sf-sykefravarsstatistikk-virksomhet'
+          - 'sf-tiltak-avtale'
+      DEPLOY_CLUSTER:
+        description: 'Deployment Cluster'
+        required: true
+        type: choice
+        default: 'dev-gcp'
+        options:
+          - 'dev-gcp'
+          - 'prod-gcp'
+          - 'dev-fss'
+          - 'prod-fss'
+      FLAG_SEEK:
+        description: "Seek"
+        required: true
+        type: boolean
+      SEEK_OFFSET:
+        description: "Seek offset"
+        required: true
+        default: 0
+      NUMBER_OF_SAMPLES:
+        description: "Number of samples"
+        required: true
+        default: 0
+      FLAG_NO_POST:
+        description: "No post"
+        required: true
+        type: boolean
+      FLAG_ALT_ID:
+        description: "Alt Id"
+        required: true
+        type: boolean
+run-name: >- # Used as run-name on dispatch:
+  Dispatch:
+  ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
+  ${{ inputs.FLAG_SEEK && format(' - SEEK {0}', inputs.SEEK_OFFSET) || '' }}
+  ${{ inputs.NUMBER_OF_SAMPLES != '0' && format(' - SAMPLE {0}', inputs.NUMBER_OF_SAMPLES) || '' }}
+  ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
+  ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.inputs.DEPLOY_APP }} to ${{ github.event.inputs.DEPLOY_CLUSTER }} (Dispatched)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    steps:
+      - name: Fetch latest image url from artifact
+        id: read-image-url
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARCHIVE_DOWNLOAD_URL=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/navikt/sf-pdl-kafka/actions/artifacts?name=imageUrl" | jq -r '.artifacts[0].archive_download_url')
+          echo "ARCHIVE_DOWNLOAD_URL: $ARCHIVE_DOWNLOAD_URL"
+          curl -s -H "Authorization: token $GITHUB_TOKEN" -o artifact.zip -L "$ARCHIVE_DOWNLOAD_URL"
+          IMAGE_URL=$(unzip -p artifact.zip)
+          echo "IMAGE_URL: $IMAGE_URL"
+          echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+      - name: Deploy ${{ github.event.inputs.DEPLOY_APP }} to ${{ github.event.inputs.DEPLOY_CLUSTER }}
+        uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: ${{ github.event.inputs.DEPLOY_CLUSTER }}
+          RESOURCE: .nais/${{ github.event.inputs.DEPLOY_APP }}/target/${{ github.event.inputs.DEPLOY_CLUSTER }}.yaml
+          VAR: image=${{ steps.read-image-url.outputs.image_url }},DEPLOY_APP=${{ inputs.DEPLOY_APP }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}

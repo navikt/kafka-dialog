@@ -9,15 +9,35 @@ on:
       DEPLOY_CLUSTER:
         required: true
         type: string
+      FLAG_SEEK:
+        required: true
+        type: boolean
+      SEEK_OFFSET:
+        required: true
+        type: string
+      NUMBER_OF_SAMPLES:
+        required: true
+        type: string
+      FLAG_NO_POST:
+        required: true
+        type: boolean
+      FLAG_ALT_ID:
+        required: true
+        type: boolean
 jobs:
   test:
-    name: Run tests - ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
+    name: >- # Displays inputs as name on job
+      Tests ${{ inputs.DEPLOY_APP }} - ${{ inputs.DEPLOY_CLUSTER }}
+      ${{ inputs.FLAG_SEEK && format(' - SEEK {0}', inputs.SEEK_OFFSET) || '' }}
+      ${{ inputs.NUMBER_OF_SAMPLES != '0' && format(' - SAMPLE {0}', inputs.NUMBER_OF_SAMPLES) || '' }}
+      ${{ inputs.FLAG_NO_POST && ' - NO_POST' || '' }}
+      ${{ inputs.FLAG_ALT_ID && ' - ALT_ID' || '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: temurin
       - name: Build and run tests
         env:
@@ -37,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: temurin
       - name: Setup Gradle to generate and submit dependency graphs
         uses: gradle/actions/setup-gradle@v3
@@ -54,6 +74,12 @@ jobs:
           team: team-dialog
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+      - name: Create image URL artifact
+        run: echo "${{ steps.build.outputs.image }}" > ./imageUrl.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imageUrl
+          path: ./imageUrl.txt
   setup-matrix:
     name: Set up matrix for deployment
     needs: test
@@ -64,7 +90,7 @@ jobs:
         id: set-matrix
         run: |
           if [ "${{ inputs.DEPLOY_APP }}" == "ALL" ]; then
-            apps=$(find ./.nais -name "${{ inputs.DEPLOY_CLUSTER }}.yaml" -exec dirname {} \; | xargs -n 1 basename)
+            apps=$(find ./.nais -name "${{ inputs.DEPLOY_CLUSTER }}.yaml" -not -path "*/default/*" -exec dirname {} \; | xargs -n 1 basename)
             matrix_config=$(printf '%s\n' "$apps" | jq -R -s -c 'split("\n")[:-1] | map({app: .})')
           else
             matrix_config=$(printf '%s\n' "${{ inputs.DEPLOY_APP }}" | jq -R -s -c 'split("\n")[:-1] | map({app: .})')
@@ -75,7 +101,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
   deploy:
     name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
-    needs: [build, setup-matrix]
+    needs: [ build, setup-matrix ]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -86,9 +112,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Merge YAML
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew mergeYamlTask
       - name: Deploy ${{ matrix.target.app }} to ${{ inputs.DEPLOY_CLUSTER }}
         uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: ${{ inputs.DEPLOY_CLUSTER }}
-          RESOURCE: .nais/${{ matrix.target.app }}/${{ inputs.DEPLOY_CLUSTER }}.yaml
-          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ matrix.target.app }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }}
+          RESOURCE: .nais/${{ matrix.target.app }}/target/${{ inputs.DEPLOY_CLUSTER }}.yaml
+          VAR: image=${{ needs.build.outputs.image }},DEPLOY_APP=${{ matrix.target.app }},DEPLOY_CLUSTER=${{ inputs.DEPLOY_CLUSTER }},NUMBER_OF_SAMPLES=${{ inputs.NUMBER_OF_SAMPLES }},FLAG_SEEK=${{ inputs.FLAG_SEEK }},SEEK_OFFSET=${{ inputs.SEEK_OFFSET }},FLAG_NO_POST=${{ inputs.FLAG_NO_POST }},FLAG_ALT_ID=${{ inputs.FLAG_ALT_ID }}
