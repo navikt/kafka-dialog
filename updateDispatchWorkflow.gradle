@@ -43,6 +43,9 @@ on:
                         .collect { "          - '${it.name}'" } // add correct indentation
                         .sort()
 
+                // Add 'ALL' as an option
+                options.add("          - 'ALL'")
+
                 // Prepare the new content for the file
                 def newContent = lines.take(optionsIndex + 1) + options + lines.drop(deployClusterIndex)
 
