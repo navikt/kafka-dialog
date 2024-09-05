@@ -14,7 +14,6 @@ import no.nav.kafka.dialog.secret_SF_CLIENT_ID
 import no.nav.kafka.dialog.secret_SF_USERNAME
 import org.apache.commons.codec.binary.Base64.decodeBase64
 import org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString
-import org.http4k.client.ApacheClient
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -52,7 +51,7 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
     private val privateKeyAlias = env(secret_PRIVATE_KEY_ALIAS)
     private val privateKeyPassword = env(secret_PRIVATE_KEY_PASSWORD)
 
-    private val client: HttpHandler = ApacheClient()
+    private val client: HttpHandler = apacheClient()
 
     private val gson = Gson()
 
@@ -101,6 +100,8 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
                     lastTokenPair = Pair(accessTokenResponse.access_token, accessTokenResponse.instance_url)
                     expireTime = (expireMomentSinceEpochInSeconds - 10) * 1000
                     return lastTokenPair
+                } else {
+                    log.error("Attempt to fetch access token $retry of 3 failed by ${response.status.code} : ${response.bodyString()}")
                 }
             } catch (e: Exception) {
                 File("/tmp/accessTokenFailStack").writeText(accessTokenRequest.toMessage() + "\n\n" + response.toMessage() + "\n\n" + e.stackTraceToString())
