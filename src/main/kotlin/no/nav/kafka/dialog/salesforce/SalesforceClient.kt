@@ -12,7 +12,7 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import java.net.URI
 
-const val SALESFORCE_VERSION = "v57.0"
+const val SALESFORCE_VERSION = "v61.0"
 
 class SalesforceClient(
     private val httpClient: HttpHandler = apacheClient(),
