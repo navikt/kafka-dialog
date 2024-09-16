@@ -61,6 +61,7 @@ class KafkaToSFPoster(
         hasRunOnce = true
 
         pollAndConsume(kafkaConsumer)
+        kafkaConsumer.close()
     }
 
     private fun setupKafkaConsumer(kafkaTopic: String) = kafkaConsumerFactory.createConsumer().apply {
