@@ -11,6 +11,7 @@ on:
         options:
           - 'sf-arbeidsgiveraktivitet'
           - 'sf-dialogmote'
+          - 'sf-dvh'
           - 'sf-ia-behovsvurdering'
           - 'sf-ia-leveranse'
           - 'sf-ia-sak'
