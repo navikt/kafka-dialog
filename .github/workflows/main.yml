@@ -13,7 +13,7 @@ jobs:
       DEPLOY_APP: sf-dvh        # use ALL to deploy all apps in cluster
       DEPLOY_CLUSTER: prod-gcp
 
-      # Start consuming from a particular offset
+      # Start consuming from a particular offset.
       # Note that the consumer will go there each time the pod reboots, so make sure you turn this off once done
       FLAG_SEEK: false
 
