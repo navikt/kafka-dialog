@@ -7,7 +7,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.kafka.dialog.metrics.WorkSessionStatistics
 import no.nav.kafka.dialog.poster.KafkaToSFPoster
-import org.http4k.server.ApacheServer
+import org.http4k.server.Netty
 import org.http4k.server.asServer
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -42,7 +42,7 @@ class KafkaPosterApplication(
                 (if (env(config_LIMIT_ON_DATES).toBoolean()) " - LIMIT_ON_DATES" else "")
         }
         DefaultExports.initialize() // Instantiate Prometheus standard metrics
-        naisAPI().asServer(ApacheServer(8080)).start()
+        naisAPI().asServer(Netty(8080)).start()
 
         val limitOnDates = env(config_LIMIT_ON_DATES).toBoolean()
 

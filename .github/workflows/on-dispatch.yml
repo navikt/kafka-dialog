@@ -15,6 +15,7 @@ on:
           - 'sf-ia-behovsvurdering'
           - 'sf-ia-leveranse'
           - 'sf-ia-sak'
+          - 'sf-ia-samarbeidsplan'
           - 'sf-stilling'
           - 'sf-sykefravarsstatistikk-bransje'
           - 'sf-sykefravarsstatistikk-land'

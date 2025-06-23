@@ -5,7 +5,7 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.http4k.client.ApacheClient
+import org.http4k.client.OkHttp
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -57,7 +57,7 @@ val replaceNumbersWithInstants: Modifier = { record ->
     }
 }
 
-val lookUpApacheClient: Lazy<HttpHandler> = lazy { ApacheClient() } // No need for proxy
+val lookUpClient: Lazy<HttpHandler> = lazy { OkHttp() } // No need for proxy
 
 val lookUpArenaActivityDetails: Modifier = { record ->
     lateinit var response: Response
@@ -70,7 +70,7 @@ val lookUpArenaActivityDetails: Modifier = { record ->
         throw RuntimeException("Unable to lookup activity details, partition ${record.partition()}, offset ${record.offset()}", e)
     }
     try {
-        val client = lookUpApacheClient.value
+        val client = lookUpClient.value
         val uri = "${env(config_ARENA_HOST)}/arena/api/v1/arbeidsgiver/aktivitet?aktivitetId=$aktivitetsId"
         val request = Request(Method.GET, uri)
         response = client.invoke(request)
