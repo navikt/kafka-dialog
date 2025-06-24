@@ -1,21 +1,21 @@
 package no.nav.kafka.dialog.salesforce
 
 import no.nav.kafka.dialog.env_HTTPS_PROXY
-import org.apache.http.HttpHost
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.impl.client.HttpClients
-import org.http4k.client.ApacheClient
+import okhttp3.OkHttpClient
+import org.http4k.client.OkHttp
 import org.http4k.core.Headers
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.net.URI
 
 const val SALESFORCE_VERSION = "v61.0"
 
 class SalesforceClient(
-    private val httpClient: HttpHandler = apacheClient(),
+    private val httpClient: HttpHandler = okHttpClient(),
     private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler()
 ) {
     fun postRecords(kafkaMessages: Set<KafkaMessage>): Response {
@@ -36,19 +36,20 @@ class SalesforceClient(
     }
 }
 
-fun apacheClient(httpsProxy: String? = System.getenv(env_HTTPS_PROXY)): HttpHandler =
+fun okHttpClient(httpsProxy: String? = System.getenv(env_HTTPS_PROXY)): HttpHandler =
     if (httpsProxy == null) {
-        ApacheClient()
+        OkHttp()
     } else {
         val up = URI(httpsProxy)
-        ApacheClient(
-            client =
-                HttpClients.custom()
-                    .setDefaultRequestConfig(
-                        RequestConfig.custom()
-                            .setProxy(HttpHost(up.host, up.port, up.scheme))
-                            .build()
-                    )
-                    .build()
+
+        val proxy = Proxy(
+            Proxy.Type.HTTP,
+            InetSocketAddress(up.host, up.port)
         )
+
+        val client = OkHttpClient.Builder()
+            .proxy(proxy)
+            .build()
+
+        OkHttp(client)
     }
