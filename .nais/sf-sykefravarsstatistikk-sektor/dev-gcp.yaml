@@ -1,7 +1,7 @@
 spec:
   env:
     - name: KAFKA_TOPIC
-      value: arbeidsgiver.sykefravarsstatistikk-sektor-v1
+      value: pia.sykefravarsstatistikk-sektor-v1
     - name: KAFKA_CLIENT_ID
       value: sf-sykefravarsstatistikk-sektor-v1
     - name: ENCODE_KEY
