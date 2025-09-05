@@ -10,7 +10,7 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-sykefravarsstatistikk-virksomhet     # Use ALL to deploy all apps in cluster
+      DEPLOY_APP: sf-sykefravarsstatistikk-metadata     # Use ALL to deploy all apps in cluster
       DEPLOY_CLUSTER: prod-gcp
 
       # Start consuming from a particular offset.
