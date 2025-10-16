@@ -1,4 +1,0 @@
-spec:
-  env:
-    - name: KAFKA_TOPIC
-      value: pia.ia-sak-leveranse-v1
