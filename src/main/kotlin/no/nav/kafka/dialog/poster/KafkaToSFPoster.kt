@@ -42,7 +42,7 @@ class KafkaToSFPoster(
     private val seekOffset: Long = env(config_SEEK_OFFSET).toLong(),
     private var samplesLeft: Int = env(config_NUMBER_OF_SAMPLES).toInt(),
     private val flagNoPost: Boolean = env(config_FLAG_NO_POST).toBoolean(),
-    private val flagEncodeKey: Boolean = env(config_ENCODE_KEY).toBoolean()
+    private val flagEncodeKey: Boolean = env(config_ENCODE_KEY).toBoolean(),
 ) {
     private enum class ConsumeResult { SUCCESSFULLY_CONSUMED_BATCH, NO_MORE_RECORDS, FAIL }
 
@@ -64,19 +64,20 @@ class KafkaToSFPoster(
         kafkaConsumer.close()
     }
 
-    private fun setupKafkaConsumer(kafkaTopic: String) = kafkaConsumerFactory.createConsumer().apply {
-        // Using assign rather than subscribe since we need the ability to seek to a particular offset
-        val topicPartitions = partitionsFor(kafkaTopic).map { TopicPartition(it.topic(), it.partition()) }
-        assign(topicPartitions)
-        log.info { "Starting work session on topic $kafkaTopic with ${topicPartitions.size} partitions" }
-        if (!hasRunOnce) {
-            if (flagSeek) {
-                topicPartitions.forEach {
-                    seek(it, seekOffset)
+    private fun setupKafkaConsumer(kafkaTopic: String) =
+        kafkaConsumerFactory.createConsumer().apply {
+            // Using assign rather than subscribe since we need the ability to seek to a particular offset
+            val topicPartitions = partitionsFor(kafkaTopic).map { TopicPartition(it.topic(), it.partition()) }
+            assign(topicPartitions)
+            log.info { "Starting work session on topic $kafkaTopic with ${topicPartitions.size} partitions" }
+            if (!hasRunOnce) {
+                if (flagSeek) {
+                    topicPartitions.forEach {
+                        seek(it, seekOffset)
+                    }
                 }
             }
         }
-    }
 
     private tailrec fun pollAndConsume(kafkaConsumer: KafkaConsumer<out Any, out Any?>) {
         val records = kafkaConsumer.poll(Duration.ofMillis(kafkaPollDuration)).toStringRecords()
@@ -92,10 +93,14 @@ class KafkaToSFPoster(
             if (!stats.hasConsumed()) {
                 WorkSessionStatistics.subsequentWorkSessionsWithEventsCounter.clear()
                 WorkSessionStatistics.workSessionsWithoutEventsCounter.inc()
-                log.info { "Finished work session without consuming. Number of work sessions without events during lifetime of app: ${WorkSessionStatistics.workSessionsWithoutEventsCounter.get().toInt()}" }
+                log.info {
+                    "Finished work session without consuming. Number of work sessions without events during lifetime of app: ${WorkSessionStatistics.workSessionsWithoutEventsCounter.get().toInt()}"
+                }
             } else {
                 WorkSessionStatistics.subsequentWorkSessionsWithEventsCounter.inc()
-                log.info { "Finished work session with activity (subsequent ${WorkSessionStatistics.subsequentWorkSessionsWithEventsCounter.get().toInt()}). $stats" }
+                log.info {
+                    "Finished work session with activity (subsequent ${WorkSessionStatistics.subsequentWorkSessionsWithEventsCounter.get().toInt()}). $stats"
+                }
             }
             ConsumeResult.NO_MORE_RECORDS
         } else {
@@ -128,13 +133,17 @@ class KafkaToSFPoster(
 
     // For testdata:
     private var whatWouldBeSentBatch = 1
+
     private fun updateWhatWouldBeSent(recordsFiltered: Iterable<ConsumerRecord<String, String?>>) {
-        File("/tmp/whatwouldbesent").appendText("BATCH ${whatWouldBeSentBatch++}\n${recordsFiltered.toKafkaMessagesSet().joinToString("\n")}\n\n")
+        File(
+            "/tmp/whatwouldbesent",
+        ).appendText("BATCH ${whatWouldBeSentBatch++}\n${recordsFiltered.toKafkaMessagesSet().joinToString("\n")}\n\n")
     }
 
-    private fun modifyRecords(records: ConsumerRecords<String, String?>): Iterable<ConsumerRecord<String, String?>> {
-        return modifier?.run { records.modifyRecords(this) } ?: records
-    }
+    private fun modifyRecords(records: ConsumerRecords<String, String?>): Iterable<ConsumerRecord<String, String?>> =
+        modifier?.run {
+            records.modifyRecords(this)
+        } ?: records
 
     private fun filterRecords(records: Iterable<ConsumerRecord<String, String?>>): Iterable<ConsumerRecord<String, String?>> {
         val recordsPostFilter = filter?.run { records.filter { invoke(it) } } ?: records
@@ -143,13 +152,14 @@ class KafkaToSFPoster(
     }
 
     private fun Iterable<ConsumerRecord<String, String?>>.toKafkaMessagesSet(): Set<KafkaMessage> {
-        val kafkaMessages = this.map {
-            KafkaMessage(
-                CRM_Topic__c = it.topic(),
-                CRM_Key__c = if (flagEncodeKey) it.key().encodeB64() else it.key(),
-                CRM_Value__c = it.value()?.encodeB64()
-            )
-        }
+        val kafkaMessages =
+            this.map {
+                KafkaMessage(
+                    CRM_Topic__c = it.topic(),
+                    CRM_Key__c = if (flagEncodeKey) it.key().encodeB64() else it.key(),
+                    CRM_Value__c = it.value()?.encodeB64(),
+                )
+            }
 
         val uniqueKafkaMessages = kafkaMessages.toSet()
         val uniqueValueCount = uniqueKafkaMessages.count()
@@ -159,14 +169,21 @@ class KafkaToSFPoster(
         return uniqueKafkaMessages
     }
 
-    private fun sampleRecords(records: Iterable<ConsumerRecord<String, String?>>, originals: Iterable<ConsumerRecord<String, String?>>) {
+    private fun sampleRecords(
+        records: Iterable<ConsumerRecord<String, String?>>,
+        originals: Iterable<ConsumerRecord<String, String?>>,
+    ) {
         records.forEach {
             val original = originals.first { original -> original.offset() == it.offset() && original.partition() == it.partition() }
 
             if (samplesLeft-- > 0) {
-                File("/tmp/samplesFromTopic").appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${original.value()}\n\n")
+                File(
+                    "/tmp/samplesFromTopic",
+                ).appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${original.value()}\n\n")
                 if (modifier != null) {
-                    File("/tmp/samplesAfterModifier").appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
+                    File(
+                        "/tmp/samplesAfterModifier",
+                    ).appendText("OFFSET: ${it.partition()} ${it.offset()}\nKEY: ${it.key()}\nVALUE: ${it.value()}\n\n")
                 }
                 log.info { "Saved sample. Samples left: $samplesLeft" }
             }

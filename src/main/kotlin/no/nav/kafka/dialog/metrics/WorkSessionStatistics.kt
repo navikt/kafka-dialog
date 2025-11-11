@@ -17,7 +17,7 @@ data class WorkSessionStatistics(
     private var blockedByFilter: Int = 0,
     private var posted: Int = 0,
     private val consumedOffsets: OffsetPairs = OffsetPairs(), // To log what range of offsets per partition has been consumed
-    private val postedOffsets: OffsetPairs = OffsetPairs() // To log what range of offsets per partition has been posted
+    private val postedOffsets: OffsetPairs = OffsetPairs(), // To log what range of offsets per partition has been posted
 ) {
     /**
      * Statistics for the lifetime of the app
@@ -35,9 +35,7 @@ data class WorkSessionStatistics(
         val workSessionExceptionCounter = registerCounter("work_session_exception")
     }
 
-    fun hasConsumed(): Boolean {
-        return consumed != 0
-    }
+    fun hasConsumed(): Boolean = consumed != 0
 
     fun updateConsumedStatistics(consumedRecords: Iterable<ConsumerRecord<String, String?>>) {
         val count = consumedRecords.count()
@@ -61,7 +59,7 @@ data class WorkSessionStatistics(
 
     data class OffsetPairs(
         val firstOffsetPerPartition: MutableMap<Int, Long> = mutableMapOf(),
-        val lastOffsetPerPartition: MutableMap<Int, Long> = mutableMapOf()
+        val lastOffsetPerPartition: MutableMap<Int, Long> = mutableMapOf(),
     ) {
         override fun toString(): String {
             if (firstOffsetPerPartition.isEmpty()) return "NONE"
@@ -70,7 +68,10 @@ data class WorkSessionStatistics(
             }
         }
 
-        fun update(records: Iterable<ConsumerRecord<String, String?>>, latestOffsetGauge: Gauge) {
+        fun update(
+            records: Iterable<ConsumerRecord<String, String?>>,
+            latestOffsetGauge: Gauge,
+        ) {
             records.forEach {
                 if (!this.firstOffsetPerPartition.containsKey(it.partition())) {
                     this.firstOffsetPerPartition[it.partition()] = it.offset()

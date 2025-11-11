@@ -67,30 +67,34 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
             return lastTokenPair
         }
         val expireMomentSinceEpochInSeconds = (System.currentTimeMillis() / 1000) + expTimeSecondsClaim
-        val claim = JWTClaim(
-            iss = sfClientID,
-            aud = sfTokenHost,
-            sub = sfUsername,
-            exp = expireMomentSinceEpochInSeconds.toString()
-        )
-        val privateKey = PrivateKeyFromBase64Store(
-            ksB64 = keystoreB64,
-            ksPwd = keystorePassword,
-            pkAlias = privateKeyAlias,
-            pkPwd = privateKeyPassword
-        )
-        val claimWithHeaderJsonUrlSafe = gson.toJson(JWTClaimHeader("RS256")).encodeB64UrlSafe() +
-            "." + gson.toJson(claim).encodeB64UrlSafe()
+        val claim =
+            JWTClaim(
+                iss = sfClientID,
+                aud = sfTokenHost,
+                sub = sfUsername,
+                exp = expireMomentSinceEpochInSeconds.toString(),
+            )
+        val privateKey =
+            privateKeyFromBase64Store(
+                ksB64 = keystoreB64,
+                ksPwd = keystorePassword,
+                pkAlias = privateKeyAlias,
+                pkPwd = privateKeyPassword,
+            )
+        val claimWithHeaderJsonUrlSafe =
+            gson.toJson(JWTClaimHeader("RS256")).encodeB64UrlSafe() +
+                "." + gson.toJson(claim).encodeB64UrlSafe()
         val fullClaimSignature = privateKey.sign(claimWithHeaderJsonUrlSafe.toByteArray())
 
-        val accessTokenRequest = Request(Method.POST, "$sfTokenHost/services/oauth2/token")
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(
-                listOf(
-                    "grant_type" to "urn:ietf:params:oauth:grant-type:jwt-bearer",
-                    "assertion" to "$claimWithHeaderJsonUrlSafe.$fullClaimSignature"
-                ).toBody()
-            )
+        val accessTokenRequest =
+            Request(Method.POST, "$sfTokenHost/services/oauth2/token")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(
+                    listOf(
+                        "grant_type" to "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                        "assertion" to "$claimWithHeaderJsonUrlSafe.$fullClaimSignature",
+                    ).toBody(),
+                )
 
         for (retry in 1..4) {
             val response: Response = client(accessTokenRequest)
@@ -104,7 +108,9 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
                     log.error("Attempt to fetch access token $retry of 3 failed by ${response.status.code} : ${response.bodyString()}")
                 }
             } catch (e: Exception) {
-                File("/tmp/accessTokenFailStack").writeText(accessTokenRequest.toMessage() + "\n\n" + response.toMessage() + "\n\n" + e.stackTraceToString())
+                File(
+                    "/tmp/accessTokenFailStack",
+                ).writeText(accessTokenRequest.toMessage() + "\n\n" + response.toMessage() + "\n\n" + e.stackTraceToString())
                 log.error("Attempt to fetch access token $retry of 3 failed by ${e.message}")
                 runBlocking { delay(retry * 1000L) }
             }
@@ -113,41 +119,50 @@ class DefaultAccessTokenHandler : AccessTokenHandler {
         return Pair("", "")
     }
 
-    private fun PrivateKeyFromBase64Store(ksB64: String, ksPwd: String, pkAlias: String, pkPwd: String): PrivateKey {
-        return KeyStore.getInstance("JKS").apply { load(ksB64.decodeB64().inputStream(), ksPwd.toCharArray()) }.run {
+    private fun privateKeyFromBase64Store(
+        ksB64: String,
+        ksPwd: String,
+        pkAlias: String,
+        pkPwd: String,
+    ): PrivateKey =
+        KeyStore.getInstance("JKS").apply { load(ksB64.decodeB64().inputStream(), ksPwd.toCharArray()) }.run {
             getKey(pkAlias, pkPwd.toCharArray()) as PrivateKey
         }
-    }
 
-    private fun PrivateKey.sign(data: ByteArray): String {
-        return this.let {
-            java.security.Signature.getInstance("SHA256withRSA").apply {
-                initSign(it)
-                update(data)
-            }.run {
-                sign().encodeB64()
-            }
+    private fun PrivateKey.sign(data: ByteArray): String =
+        this.let {
+            java.security.Signature
+                .getInstance("SHA256withRSA")
+                .apply {
+                    initSign(it)
+                    update(data)
+                }.run {
+                    sign().encodeB64()
+                }
         }
-    }
 
     private fun ByteArray.encodeB64(): String = encodeBase64URLSafeString(this)
+
     private fun String.decodeB64(): ByteArray = decodeBase64(this)
+
     private fun String.encodeB64UrlSafe(): String = encodeBase64URLSafeString(this.toByteArray())
 
     private data class JWTClaim(
         val iss: String,
         val aud: String,
         val sub: String,
-        val exp: String
+        val exp: String,
     )
 
-    private data class JWTClaimHeader(val alg: String)
+    private data class JWTClaimHeader(
+        val alg: String,
+    )
 
     private data class AccessTokenResponse(
         val access_token: String,
         val scope: String,
         val instance_url: String,
         val id: String,
-        val token_type: String
+        val token_type: String,
     )
 }

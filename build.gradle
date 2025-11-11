@@ -3,8 +3,8 @@ plugins {
 
     id "com.github.davidmc24.gradle.plugin.avro" version '1.9.1'
 
-    id 'org.jetbrains.kotlin.jvm' version '1.9.24'
-    id 'org.jmailen.kotlinter' version '3.2.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.21'
+    id 'org.jmailen.kotlinter' version '5.2.0'
     id 'com.gradleup.shadow' version '8.3.1'
 }
 
@@ -32,7 +32,6 @@ tasks.withType(JavaExec) {
 
 repositories {
     mavenCentral()
-    jcenter()
     maven {
         url "https://packages.confluent.io/maven"
     }
@@ -53,23 +52,21 @@ repositories {
 dependencies {
     implementation 'org.json:json:20250517'
 
-    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.13.2'
 
     implementation("no.nav.syfo.dialogmote.avro:isdialogmote-schema:1.0.5")
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
 
-    implementation "org.http4k:http4k-core:5.14.4.0"
-    implementation "org.http4k:http4k-server-netty:5.14.4.0"
-    implementation "io.netty:netty-handler:4.1.118.Final" //Transient bump
-    implementation "io.netty:netty-common:4.1.118.Final" //Transient bump
-    implementation "org.http4k:http4k-client-okhttp:5.14.4.0"
+    implementation "org.http4k:http4k-core:6.20.1.0"
+    implementation "org.http4k:http4k-server-netty:6.20.1.0"
+    implementation "org.http4k:http4k-client-okhttp:6.20.1.0"
 
     implementation "org.apache.kafka:kafka-clients:7.5.1-ce"
     implementation "io.confluent:kafka-avro-serializer:7.5.1"
 
     implementation "io.github.microutils:kotlin-logging:3.0.5"
-    implementation "ch.qos.logback:logback-classic:1.5.18"
+    implementation "ch.qos.logback:logback-classic:1.5.20"
     implementation "net.logstash.logback:logstash-logback-encoder:8.1"
 
     implementation "io.prometheus:simpleclient_common:0.8.1"
@@ -99,12 +96,10 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     dependsOn("generateAvroJava")
     dependsOn("mergeYamlTask")
     dependsOn("updateDispatchWorkflow")
-    kotlinOptions.jvmTarget = "21"
 }
 
-tasks.withType(JavaCompile) {
-    sourceCompatibility = "21"
-    targetCompatibility = "21"
+kotlin {
+    jvmToolchain(21)
 }
 
 apply from: 'mergeYamlTask.gradle'

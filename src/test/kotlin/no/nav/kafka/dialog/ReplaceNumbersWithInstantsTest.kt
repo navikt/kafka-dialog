@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class ReplaceNumbersWithInstantsTest {
-
     fun String.toConsumerRecordValue(): ConsumerRecord<String, String?> = ConsumerRecord("topic", 0, 0L, "key", this)
 
     @Test
@@ -16,7 +15,7 @@ class ReplaceNumbersWithInstantsTest {
 
         Assertions.assertEquals(
             "{\"number\":\"$knownInstant\"}",
-            replaceNumbersWithInstants("{\"number\":$instantAsEpochMillis}".toConsumerRecordValue())
+            replaceNumbersWithInstants("{\"number\":$instantAsEpochMillis}".toConsumerRecordValue()),
         )
     }
 
@@ -25,8 +24,8 @@ class ReplaceNumbersWithInstantsTest {
         Assertions.assertEquals(
             """{"someText":"text","aStringNumber":"1234567","number":"1970-01-01T00:20:34.567Z","aBoolean":true}""",
             replaceNumbersWithInstants(
-                """{"someText":"text","aStringNumber":"1234567","number":1234567,"aBoolean":true}""".toConsumerRecordValue()
-            )
+                """{"someText":"text","aStringNumber":"1234567","number":1234567,"aBoolean":true}""".toConsumerRecordValue(),
+            ),
         )
     }
 }

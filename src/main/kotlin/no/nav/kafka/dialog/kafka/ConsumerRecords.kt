@@ -5,16 +5,12 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.common.TopicPartition
 
-fun ConsumerRecords<out Any, out Any?>.toStringRecords(): ConsumerRecords<String, String?> {
-    return transformRecords { it.value().toString() }
-}
+fun ConsumerRecords<out Any, out Any?>.toStringRecords(): ConsumerRecords<String, String?> = transformRecords { it.value().toString() }
 
-fun ConsumerRecords<String, String?>.modifyRecords(modifier: Modifier): ConsumerRecords<String, String?> {
-    return transformRecords { modifier(it) }
-}
+fun ConsumerRecords<String, String?>.modifyRecords(modifier: Modifier): ConsumerRecords<String, String?> = transformRecords { modifier(it) }
 
 private inline fun <K, V> ConsumerRecords<K, V>.transformRecords(
-    valueTransform: (ConsumerRecord<K, V>) -> String?
+    valueTransform: (ConsumerRecord<K, V>) -> String?,
 ): ConsumerRecords<String, String?> {
     val transformedRecords = mutableMapOf<TopicPartition, MutableList<ConsumerRecord<String, String?>>>()
 
@@ -34,8 +30,8 @@ private inline fun <K, V> ConsumerRecords<K, V>.transformRecords(
                     partitionRecord.key().toString(), // Perform String transform on Key
                     valueTransform(partitionRecord), // Perform String or Modify transform on Value
                     partitionRecord.headers(),
-                    partitionRecord.leaderEpoch()
-                )
+                    partitionRecord.leaderEpoch(),
+                ),
             )
         }
     }

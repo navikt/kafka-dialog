@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package no.nav.kafka.dialog
 
 import com.google.gson.JsonObject
@@ -31,7 +33,9 @@ val removeAdTextProperty: Modifier = { record ->
         }
         obj.toString()
     } catch (e: Exception) {
-        throw RuntimeException("Unable to parse event to remove adtext property, partition ${record.partition()}, offset $${record.offset()}, message: ${e.message}")
+        throw RuntimeException(
+            "Unable to parse event to remove adtext property, partition ${record.partition()}, offset $${record.offset()}, message: ${e.message}",
+        )
     }
 }
 
@@ -53,7 +57,9 @@ val replaceNumbersWithInstants: Modifier = { record ->
         obj.toString()
     } catch (e: Exception) {
         File("/tmp/replaceNumbersWithInstantsFail").appendText("$record\nMESSAGE ${e.message}\n\n")
-        throw RuntimeException("Unable to replace longs to instants in modifier, partition ${record.partition()}, offset ${record.offset()}, message ${e.message}")
+        throw RuntimeException(
+            "Unable to replace longs to instants in modifier, partition ${record.partition()}, offset ${record.offset()}, message ${e.message}",
+        )
     }
 }
 
@@ -66,7 +72,9 @@ val lookUpArenaActivityDetails: Modifier = { record ->
         val obj = JsonParser.parseString(record.value()) as JsonObject
         aktivitetsId = (if (obj.has("after")) obj["after"] else obj["before"]).asJsonObject.get("AKTIVITET_ID").asLong
     } catch (e: Exception) {
-        File("/tmp/lookUpArenaActivityDetailsParseInputException").writeText("partition:${record.partition()},offset:${record.offset()}\ninput:${record.value()}\n$e")
+        File(
+            "/tmp/lookUpArenaActivityDetailsParseInputException",
+        ).writeText("partition:${record.partition()},offset:${record.offset()}\ninput:${record.value()}\n$e")
         throw RuntimeException("Unable to lookup activity details, partition ${record.partition()}, offset ${record.offset()}", e)
     }
     try {
@@ -82,13 +90,21 @@ val lookUpArenaActivityDetails: Modifier = { record ->
             File("/tmp/inputAtNoContentFromArena").writeText(record.value() ?: "null")
             """{"aktivitetskode":"NO_CONTENT","aktivitetsgruppekode":"NO_CONTENT"}"""
         } else if (response.status != Status.OK) {
-            File("/tmp/arenaResponseUnsuccessful").writeText("At partition ${record.partition()}, offset: ${record.offset()}\n" + response.toMessage())
+            File(
+                "/tmp/arenaResponseUnsuccessful",
+            ).writeText("At partition ${record.partition()}, offset: ${record.offset()}\n" + response.toMessage())
             throw RuntimeException("Unsuccessful response from Arena at lookup, partition ${record.partition()}, offset ${record.offset()}")
         } else {
             response.bodyString()
         }
     } catch (e: Exception) {
-        File("/tmp/lookUpArenaActivityDetailsException").writeText("partition${record.partition()},offset:${record.offset()}\ninput:${record.value()}\nresponse:\n${response.toMessage()}\nException:$e")
-        throw RuntimeException("Unable to lookup activity details, partition ${record.partition()} offset ${record.offset()}, message ${e.message}")
+        File(
+            "/tmp/lookUpArenaActivityDetailsException",
+        ).writeText(
+            "partition${record.partition()},offset:${record.offset()}\ninput:${record.value()}\nresponse:\n${response.toMessage()}\nException:$e",
+        )
+        throw RuntimeException(
+            "Unable to lookup activity details, partition ${record.partition()} offset ${record.offset()}, message ${e.message}",
+        )
     }
 }

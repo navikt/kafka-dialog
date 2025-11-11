@@ -14,14 +14,37 @@ object Prometheus {
     }
 
     fun registerGauge(name: String) =
-        Gauge.build().name(name).help(name).register()
+        Gauge
+            .build()
+            .name(name)
+            .help(name)
+            .register()
 
-    fun registerLabelGauge(name: String, label: String) =
-        Gauge.build().name(name).help(name).labelNames(label).register()
+    fun registerLabelGauge(
+        name: String,
+        label: String,
+    ) = Gauge
+        .build()
+        .name(name)
+        .help(name)
+        .labelNames(label)
+        .register()
 
     fun registerCounter(name: String): Counter =
-        Counter.build().name(name).help(name).register()
+        Counter
+            .build()
+            .name(name)
+            .help(name)
+            .register()
 
-    fun registerLabelCounter(name: String, label: String): Counter =
-        Counter.build().name(name).help(name).labelNames(label).register()
+    fun registerLabelCounter(
+        name: String,
+        label: String,
+    ): Counter =
+        Counter
+            .build()
+            .name(name)
+            .help(name)
+            .labelNames(label)
+            .register()
 }
