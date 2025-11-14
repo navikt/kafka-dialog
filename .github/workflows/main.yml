@@ -11,7 +11,7 @@ jobs:
     secrets: inherit
     with:
       DEPLOY_APP: sf-arbeidsgiveraktivitet     # Use ALL to deploy all apps in cluster
-      DEPLOY_CLUSTER: dev-fss
+      DEPLOY_CLUSTER: prod-fss
 
       # Start consuming from a particular offset.
       # Note that the consumer will go there each time the pod reboots, so make sure you turn this off once done
