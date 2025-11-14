@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:max-line-length")
+
 package no.nav.kafka.dialog.poster
 
 import com.google.gson.Gson
@@ -30,9 +32,8 @@ class KafkaToSFPosterTest {
     private fun String?.asRecordValue(offset: Long = 1L) = ConsumerRecord("topic", 0, offset, "key", this)
 
     // Helper function to create an instance of ConsumerRecords from list of consumer records
-    private fun List<ConsumerRecord<String, String?>>.toConsumerRecords(): ConsumerRecords<String, String?> {
-        return ConsumerRecords<String, String?>(mapOf(TopicPartition("topic", 0) to this))
-    }
+    private fun List<ConsumerRecord<String, String?>>.toConsumerRecords(): ConsumerRecords<String, String?> =
+        ConsumerRecords<String, String?>(mapOf(TopicPartition("topic", 0) to this))
 
     private val gson = Gson()
 
@@ -55,7 +56,12 @@ class KafkaToSFPosterTest {
         setUp()
     }
 
-    private fun setUp(flagSeek: Boolean = false, numberOfSamples: Int = 0, flagNoPost: Boolean = false, flagRunOnce: Boolean = false) {
+    private fun setUp(
+        flagSeek: Boolean = false,
+        numberOfSamples: Int = 0,
+        flagNoPost: Boolean = false,
+        flagRunOnce: Boolean = false,
+    ) {
         every { kafkaConsumerFactoryMock.createConsumer() } returns kafkaConsumerMock
         every { kafkaConsumerMock.partitionsFor(any()) } returns listOf(partitionInfoMock)
         every { partitionInfoMock.topic() } returns "topic"
@@ -66,19 +72,20 @@ class KafkaToSFPosterTest {
         every { sfClientMock.postRecords(any()) } returns Response(Status.OK).body("[${gson.toJson(SFsObjectStatus("id", true))}]")
         every { kafkaConsumerMock.commitSync() } returns Unit
 
-        kafkaToSFPoster = KafkaToSFPoster(
-            filter = filter,
-            modifier = modifier,
-            sfClient = sfClientMock,
-            kafkaConsumerFactory = kafkaConsumerFactoryMock,
-            kafkaTopic = "topic",
-            kafkaPollDuration = 10L,
-            flagSeek = flagSeek,
-            seekOffset = 0L,
-            samplesLeft = numberOfSamples,
-            flagNoPost = flagNoPost,
-            flagEncodeKey = false
-        )
+        kafkaToSFPoster =
+            KafkaToSFPoster(
+                filter = filter,
+                modifier = modifier,
+                sfClient = sfClientMock,
+                kafkaConsumerFactory = kafkaConsumerFactoryMock,
+                kafkaTopic = "topic",
+                kafkaPollDuration = 10L,
+                flagSeek = flagSeek,
+                seekOffset = 0L,
+                samplesLeft = numberOfSamples,
+                flagNoPost = flagNoPost,
+                flagEncodeKey = false,
+            )
     }
 
     @AfterEach
@@ -102,10 +109,11 @@ class KafkaToSFPosterTest {
             sfClientMock.postRecords(
                 setOf(
                     KafkaMessage(
-                        CRM_Topic__c = "topic", CRM_Key__c = "key",
-                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray())
-                    )
-                )
+                        CRM_Topic__c = "topic",
+                        CRM_Key__c = "key",
+                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray()),
+                    ),
+                ),
             )
         }
         verify { kafkaConsumerMock.commitSync() }
@@ -124,10 +132,11 @@ class KafkaToSFPosterTest {
             sfClientMock.postRecords(
                 setOf(
                     KafkaMessage(
-                        CRM_Topic__c = "topic", CRM_Key__c = "key",
-                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray())
-                    )
-                )
+                        CRM_Topic__c = "topic",
+                        CRM_Key__c = "key",
+                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray()),
+                    ),
+                ),
             )
         }
         verify { kafkaConsumerMock.commitSync() }
@@ -184,10 +193,11 @@ class KafkaToSFPosterTest {
             sfClientMock.postRecords(
                 setOf(
                     KafkaMessage(
-                        CRM_Topic__c = "topic", CRM_Key__c = "key",
-                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray())
-                    )
-                )
+                        CRM_Topic__c = "topic",
+                        CRM_Key__c = "key",
+                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray()),
+                    ),
+                ),
             )
         }
         verify { kafkaConsumerMock.commitSync() }
@@ -215,10 +225,11 @@ class KafkaToSFPosterTest {
             sfClientMock.postRecords(
                 setOf(
                     KafkaMessage(
-                        CRM_Topic__c = "topic", CRM_Key__c = "key",
-                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray())
-                    )
-                )
+                        CRM_Topic__c = "topic",
+                        CRM_Key__c = "key",
+                        CRM_Value__c = Base64.getEncoder().encodeToString(exampleJson.toByteArray()),
+                    ),
+                ),
             )
         }
         verify(exactly = 2) { kafkaConsumerMock.commitSync() }
@@ -246,10 +257,11 @@ class KafkaToSFPosterTest {
             sfClientMock.postRecords(
                 setOf(
                     KafkaMessage(
-                        CRM_Topic__c = "topic", CRM_Key__c = "key",
-                        CRM_Value__c = Base64.getEncoder().encodeToString((exampleJson + "-modification").toByteArray())
-                    )
-                )
+                        CRM_Topic__c = "topic",
+                        CRM_Key__c = "key",
+                        CRM_Value__c = Base64.getEncoder().encodeToString((exampleJson + "-modification").toByteArray()),
+                    ),
+                ),
             )
         }
         verify { kafkaConsumerMock.commitSync() }

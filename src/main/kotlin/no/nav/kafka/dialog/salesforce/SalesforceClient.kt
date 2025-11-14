@@ -16,10 +16,9 @@ const val SALESFORCE_VERSION = "v61.0"
 
 class SalesforceClient(
     private val httpClient: HttpHandler = okHttpClient(),
-    private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler()
+    private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler(),
 ) {
     fun postRecords(kafkaMessages: Set<KafkaMessage>): Response {
-
         val requestBody = SFsObjectRest(records = kafkaMessages).toJson()
 
         val dstUrl = "${accessTokenHandler.instanceUrl}/services/data/$SALESFORCE_VERSION/composite/sobjects"
@@ -27,7 +26,7 @@ class SalesforceClient(
         val headers: Headers =
             listOf(
                 "Authorization" to "Bearer ${accessTokenHandler.accessToken}",
-                "Content-Type" to "application/json;charset=UTF-8"
+                "Content-Type" to "application/json;charset=UTF-8",
             )
 
         val request = Request(Method.POST, dstUrl).headers(headers).body(requestBody)
@@ -42,14 +41,17 @@ fun okHttpClient(httpsProxy: String? = System.getenv(env_HTTPS_PROXY)): HttpHand
     } else {
         val up = URI(httpsProxy)
 
-        val proxy = Proxy(
-            Proxy.Type.HTTP,
-            InetSocketAddress(up.host, up.port)
-        )
+        val proxy =
+            Proxy(
+                Proxy.Type.HTTP,
+                InetSocketAddress(up.host, up.port),
+            )
 
-        val client = OkHttpClient.Builder()
-            .proxy(proxy)
-            .build()
+        val client =
+            OkHttpClient
+                .Builder()
+                .proxy(proxy)
+                .build()
 
         OkHttp(client)
     }

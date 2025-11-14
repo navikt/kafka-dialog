@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename")
+
 package no.nav.kafka.dialog
 
 import com.google.gson.Gson
@@ -16,15 +18,24 @@ val filterTiltakstypeMidlertidigLonnstilskudd: Filter = { record ->
         val obj = JsonParser.parseString(record.value()) as JsonObject
         obj["tiltakstype"].asString == "MIDLERTIDIG_LONNSTILSKUDD"
     } catch (e: Exception) {
-        throw RuntimeException("Unable to parse input for tiltakstype filter, partition ${record.partition()}, offset ${record.offset()}, message ${e.message}")
+        throw RuntimeException(
+            "Unable to parse input for tiltakstype filter, partition ${record.partition()}, offset ${record.offset()}, message ${e.message}",
+        )
     }
 }
 
-data class ValidCode(val aktivitetskode: String, val aktivitetsgruppekode: String)
+data class ValidCode(
+    val aktivitetskode: String,
+    val aktivitetsgruppekode: String,
+)
 
-val aktivitetsfilterValidCodes: Lazy<Array<ValidCode>> = lazy {
-    Gson().fromJson<Array<ValidCode>>(KafkaPosterApplication::class.java.getResource("/aktivitetsfilter.json").readText(), Array<ValidCode>::class.java)
-}
+val aktivitetsfilterValidCodes: Lazy<Array<ValidCode>> =
+    lazy {
+        Gson().fromJson<Array<ValidCode>>(
+            KafkaPosterApplication::class.java.getResource("/aktivitetsfilter.json").readText(),
+            Array<ValidCode>::class.java,
+        )
+    }
 
 val filterOnActivityCodes: Filter = { record ->
     try {
@@ -35,6 +46,10 @@ val filterOnActivityCodes: Filter = { record ->
         (validCodes.any { it.aktivitetskode == aktivitetskode && it.aktivitetsgruppekode == aktivitetsgruppekode })
     } catch (e: Exception) {
         File("/tmp/filterOnActivityCodesFail").appendText("$record\nMESSAGE ${e.message}\n\n")
-        throw (RuntimeException("Exception at filter on activity codes, partition ${record.partition()} offset ${record.offset()}, message " + e.message))
+        throw (
+            RuntimeException(
+                "Exception at filter on activity codes, partition ${record.partition()} offset ${record.offset()}, message " + e.message,
+            )
+        )
     }
 }

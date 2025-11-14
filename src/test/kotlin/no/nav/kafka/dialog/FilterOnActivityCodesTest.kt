@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class FilterOnActivityCodesTest {
-
     fun String.toConsumerRecordValue(): ConsumerRecord<String, String?> = ConsumerRecord("topic", 0, 0L, "key", this)
 
     @Test
@@ -16,9 +15,8 @@ class FilterOnActivityCodesTest {
                 (
                     "{\"aktivitetskode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetskode}\"" +
                         ",\"aktivitetsgruppekode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetsgruppekode}\"}"
-                    )
-                    .toConsumerRecordValue()
-            )
+                ).toConsumerRecordValue(),
+            ),
         )
 
         Assertions.assertEquals(
@@ -27,9 +25,8 @@ class FilterOnActivityCodesTest {
                 (
                     "{\"aktivitetskode\":\"NOT_A_VALID_CODE\"" +
                         ",\"aktivitetsgruppekode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetsgruppekode}\"}"
-                    )
-                    .toConsumerRecordValue()
-            )
+                ).toConsumerRecordValue(),
+            ),
         )
 
         Assertions.assertEquals(
@@ -38,9 +35,8 @@ class FilterOnActivityCodesTest {
                 (
                     "{\"aktivitetskode\":\"${aktivitetsfilterValidCodes.value.first().aktivitetskode}\"" +
                         ",\"aktivitetsgruppekode\":\"NOT_A_VALID_CODE\"}"
-                    )
-                    .toConsumerRecordValue()
-            )
+                ).toConsumerRecordValue(),
+            ),
         )
     }
 }

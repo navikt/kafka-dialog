@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:filename", "ktlint:standard:property-naming")
+
 package no.nav.kafka.dialog
 
 /**
@@ -14,7 +16,6 @@ package no.nav.kafka.dialog
  * - secret: Denotes an environment variable loaded from a Kubernetes secret.
  */
 
-// Config environment variables set in yaml file
 const val config_DEPLOY_APP = "DEPLOY_APP"
 const val config_DEPLOY_CLUSTER = "DEPLOY_CLUSTER"
 const val config_KAFKA_TOPIC = "KAFKA_TOPIC"
@@ -34,11 +35,13 @@ const val config_ENCODE_KEY = "ENCODE_KEY"
 const val config_ARENA_HOST = "ARENA_HOST"
 
 const val env_HTTPS_PROXY = "HTTPS_PROXY"
+
 // Kafka injected environment dependencies
 const val env_KAFKA_BROKERS = "KAFKA_BROKERS"
 const val env_KAFKA_KEYSTORE_PATH = "KAFKA_KEYSTORE_PATH"
 const val env_KAFKA_CREDSTORE_PASSWORD = "KAFKA_CREDSTORE_PASSWORD"
 const val env_KAFKA_TRUSTSTORE_PATH = "KAFKA_TRUSTSTORE_PATH"
+
 // Related to Avro:
 const val env_KAFKA_SCHEMA_REGISTRY = "KAFKA_SCHEMA_REGISTRY"
 const val env_KAFKA_SCHEMA_REGISTRY_USER = "KAFKA_SCHEMA_REGISTRY_USER"

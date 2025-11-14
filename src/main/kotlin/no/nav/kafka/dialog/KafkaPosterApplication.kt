@@ -23,7 +23,7 @@ import java.time.ZoneId
  */
 class KafkaPosterApplication(
     modifier: Modifier? = null,
-    filter: Filter? = null
+    filter: Filter? = null,
 ) {
     private val poster = KafkaToSFPoster(modifier, filter)
 
@@ -54,7 +54,7 @@ class KafkaPosterApplication(
                         poster.runWorkSession()
                     } else {
                         log.info { "Today (${LocalDate.now()}) not found within active dates ($activeDates) - will sleep until tomorrow" }
-                        conditionalWait(findMillisToHourNextDay(hourToStartWorkSessionOnActiveDate))
+                        conditionalWait(findMillisToHourNextDay(HOUR_TO_START_WORK_SESSION_ON_ACTIVE_DATE))
                     }
                 } else {
                     poster.runWorkSession()
@@ -75,26 +75,31 @@ class KafkaPosterApplication(
         runBlocking {
             log.debug { "Will wait $ms ms" }
 
-            val waitJob = launch {
-                runCatching { delay(ms) }
-                    .onSuccess { log.info { "waiting completed" } }
-                    .onFailure { log.info { "waiting interrupted" } }
-            }
-
-            tailrec suspend fun loop(): Unit = when {
-                waitJob.isCompleted -> Unit
-                ShutdownHook.isActive() -> waitJob.cancel()
-                else -> {
-                    delay(250L)
-                    loop()
+            val waitJob =
+                launch {
+                    runCatching { delay(ms) }
+                        .onSuccess { log.info { "waiting completed" } }
+                        .onFailure { log.info { "waiting interrupted" } }
                 }
-            }
+
+            tailrec suspend fun loop(): Unit =
+                when {
+                    waitJob.isCompleted -> Unit
+                    ShutdownHook.isActive() -> waitJob.cancel()
+                    else -> {
+                        delay(250L)
+                        loop()
+                    }
+                }
             loop()
             waitJob.join()
         }
 
-    fun envAsLocalDates(env: String): List<LocalDate> = System.getenv(env).split(",")
-        .map { LocalDate.parse(it.trim()) }
+    fun envAsLocalDates(env: String): List<LocalDate> =
+        System
+            .getenv(env)
+            .split(",")
+            .map { LocalDate.parse(it.trim()) }
 
     private fun Long.parsedAsMillisSecondsTime(): String {
         val seconds = (this / 1000) % 60
@@ -116,4 +121,4 @@ class KafkaPosterApplication(
     }
 }
 
-const val hourToStartWorkSessionOnActiveDate = 8
+const val HOUR_TO_START_WORK_SESSION_ON_ACTIVE_DATE = 8
