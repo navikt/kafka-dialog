@@ -10,7 +10,7 @@ jobs:
       id-token: write
     secrets: inherit
     with:
-      DEPLOY_APP: sf-dvh     # Use ALL to deploy all apps in cluster
+      DEPLOY_APP: ALL     # Use ALL to deploy all apps in cluster
       DEPLOY_CLUSTER: dev-gcp
 
       # Start consuming from a particular offset.
