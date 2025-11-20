@@ -1,4 +1,0 @@
-spec:
-  env:
-    - name: KAFKA_TOPIC
-      value: team-dialog.employer-activity
