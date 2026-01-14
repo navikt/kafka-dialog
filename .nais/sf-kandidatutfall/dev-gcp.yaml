@@ -1,0 +1,8 @@
+spec:
+  env:
+    - name: KAFKA_TOPIC
+      value: toi.kandidatutfall
+    - name: MESSAGE_ENCODING
+      value: AVRO_VALUE_ONLY
+    - name: ENCODE_KEY
+      value: 'true'
