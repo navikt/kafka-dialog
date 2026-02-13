@@ -73,7 +73,7 @@ dependencies {
     implementation "io.prometheus:simpleclient_hotspot:0.8.1"
 
     implementation "org.xerial.snappy:snappy-java:1.1.10.4" //Desired transient snappy to kafka-clients above
-    implementation "org.apache.avro:avro:1.11.4" //Desired transient avro to serializer above
+    implementation "org.apache.avro:avro:1.11.5" //Desired transient avro to serializer above
     implementation "org.apache.commons:commons-lang3:3.18.0"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
