@@ -68,7 +68,7 @@ jobs:
     name: Set up matrix for deployment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up matrix
         id: set-matrix
         run: |
@@ -106,13 +106,13 @@ jobs:
           echo "IMAGE_URL: $IMAGE_URL"
           echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Merge YAML
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew mergeYamlTask
       - name: Deploy ${{ matrix.target.app }} to ${{ github.event.inputs.DEPLOY_CLUSTER }}
-        uses: nais/deploy/actions/deploy@v1
+        uses: nais/deploy/actions/deploy@fa754451577294aae42872a69b888b3470478ec1 # v2
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: ${{ github.event.inputs.DEPLOY_CLUSTER }}
