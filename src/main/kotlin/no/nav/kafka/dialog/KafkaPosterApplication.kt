@@ -9,6 +9,7 @@ import no.nav.kafka.dialog.metrics.WorkSessionStatistics
 import no.nav.kafka.dialog.poster.KafkaToSFPoster
 import org.http4k.server.Netty
 import org.http4k.server.asServer
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -42,6 +43,8 @@ class KafkaPosterApplication(
                 (if (env(config_LIMIT_ON_DATES).toBoolean()) " - LIMIT_ON_DATES" else "")
         }
         DefaultExports.initialize() // Instantiate Prometheus standard metrics
+        val dir = File("/tmp/files")
+        dir.mkdirs() // ensures /tmp/files exists
         naisAPI().asServer(Netty(8080)).start()
 
         val limitOnDates = env(config_LIMIT_ON_DATES).toBoolean()
