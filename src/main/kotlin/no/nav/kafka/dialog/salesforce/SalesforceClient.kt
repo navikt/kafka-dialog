@@ -3,8 +3,7 @@ package no.nav.kafka.dialog.salesforce
 import no.nav.kafka.dialog.config_SALESFORCE_API_VERSION
 import no.nav.kafka.dialog.env
 import no.nav.kafka.dialog.env_HTTPS_PROXY
-import no.nav.sf.pdl.kafka.salesforce.NewAccessTokenHandler
-import no.nav.sf.pubsub.token.MigratingAccessTokenHandler
+import no.nav.sf.pdl.kafka.salesforce.DefaultAccessTokenHandler
 import okhttp3.OkHttpClient
 import org.http4k.client.OkHttp
 import org.http4k.core.Headers
@@ -22,7 +21,7 @@ val SALESFORCE_VERSION = env(config_SALESFORCE_API_VERSION)
 class SalesforceClient(
     private val httpClient: HttpHandler = okHttpClient(),
     private val accessTokenHandler: AccessTokenHandler =
-        NewAccessTokenHandler(),
+        DefaultAccessTokenHandler(),
 ) {
     fun postRecords(kafkaMessages: Set<KafkaMessage>): Response {
         val requestBody = SFsObjectRest(records = kafkaMessages).toJson()
@@ -43,9 +42,6 @@ class SalesforceClient(
 
 fun okHttpClient(httpsProxy: String? = System.getenv(env_HTTPS_PROXY)): HttpHandler =
     if (httpsProxy == null) {
-        val dir = File("/tmp/files")
-        dir.mkdirs() // ensures /tmp/files exists
-        File("/tmp/files/noproxy").writeText("No proxy in use")
         OkHttp()
     } else {
         val up = URI(httpsProxy)
@@ -61,10 +57,6 @@ fun okHttpClient(httpsProxy: String? = System.getenv(env_HTTPS_PROXY)): HttpHand
                 .Builder()
                 .proxy(proxy)
                 .build()
-
-        val dir = File("/tmp/files")
-        dir.mkdirs() // ensures /tmp/files exists
-        File("/tmp/files/proxy").writeText("Proxy is in use")
 
         OkHttp(client)
     }
