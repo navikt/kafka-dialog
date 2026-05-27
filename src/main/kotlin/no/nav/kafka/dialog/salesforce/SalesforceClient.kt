@@ -1,6 +1,9 @@
 package no.nav.kafka.dialog.salesforce
 
+import no.nav.kafka.dialog.config_SALESFORCE_API_VERSION
+import no.nav.kafka.dialog.env
 import no.nav.kafka.dialog.env_HTTPS_PROXY
+import no.nav.sf.pdl.kafka.salesforce.DefaultAccessTokenHandler
 import okhttp3.OkHttpClient
 import org.http4k.client.OkHttp
 import org.http4k.core.Headers
@@ -8,15 +11,17 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
+import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
 
-const val SALESFORCE_VERSION = "v61.0"
+val SALESFORCE_VERSION = env(config_SALESFORCE_API_VERSION)
 
 class SalesforceClient(
     private val httpClient: HttpHandler = okHttpClient(),
-    private val accessTokenHandler: AccessTokenHandler = DefaultAccessTokenHandler(),
+    private val accessTokenHandler: AccessTokenHandler =
+        DefaultAccessTokenHandler(),
 ) {
     fun postRecords(kafkaMessages: Set<KafkaMessage>): Response {
         val requestBody = SFsObjectRest(records = kafkaMessages).toJson()

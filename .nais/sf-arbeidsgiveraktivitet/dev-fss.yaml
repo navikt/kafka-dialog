@@ -30,7 +30,11 @@ spec:
         - host: test.salesforce.com
         - host: navdialog--preprod.my.salesforce.com
   envFrom:
+    - configmap: salesforce-common
+    - secret: migration-preprod
     - secret: kafka-integrasjon-po-arbeidsgiver
+  ingresses:
+    - 'https://{{ DEPLOY_APP }}.intern.dev.nav.no'
   kafka:
     pool: nav-dev # enum of nav-dev, nav-prod
   env:
