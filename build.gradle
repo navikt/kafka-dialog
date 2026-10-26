@@ -1,8 +1,6 @@
 plugins {
     id 'application'
 
-    id "com.github.davidmc24.gradle.plugin.avro" version '1.9.1'
-
     id 'org.jetbrains.kotlin.jvm' version '2.4.21'
     id 'org.jmailen.kotlinter' version '5.2.0'
     id 'com.gradleup.shadow' version '8.3.1'
@@ -98,7 +96,6 @@ sourceSets {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    dependsOn("generateAvroJava")
     dependsOn("mergeYamlTask")
     dependsOn("updateDispatchWorkflow")
 }
