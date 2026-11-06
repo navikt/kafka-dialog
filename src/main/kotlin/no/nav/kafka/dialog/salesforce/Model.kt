@@ -53,7 +53,7 @@ data class SFObjectError(
 
 fun Response.isSuccess(): Boolean =
     when (status) {
-        Status.OK ->
+        Status.OK -> {
             try {
                 val listOfStatusObject: Type = object : TypeToken<ArrayList<SFsObjectStatus>>() {}.type
                 val parsedResult = Gson().fromJson(bodyString(), listOfStatusObject) as List<SFsObjectStatus>
@@ -71,6 +71,8 @@ fun Response.isSuccess(): Boolean =
                 log.error { "Post status parse error" }
                 false
             }
+        }
+
         else -> {
             File("/tmp/sf-response-not-ok").writeText(this.toMessage())
             log.error { "Post request to Salesforce failed - ${status.description}(${status.code})" }
