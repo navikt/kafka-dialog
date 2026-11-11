@@ -76,7 +76,7 @@ jobs:
         run: echo "${{ steps.docker-push.outputs.image }}" > ./imageUrl.txt
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: imageUrl
+          name: ${{ github.workflow == 'Rebuild and deploy selected applications' && format('imageUrl-{0}-{1}', inputs.DEPLOY_APP, inputs.DEPLOY_CLUSTER) || 'imageUrl' }}
           path: ./imageUrl.txt
   setup-matrix:
     name: Set up matrix for deployment
