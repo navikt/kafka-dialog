@@ -34,7 +34,7 @@ jobs:
           targets = []
           for value in os.environ["TARGETS"].split(","):
               value = value.strip()
-              if not re.fullmatch(r"[a-z0-9][a-z0-9-]*:(dev-gcp|prod-gcp)", value):
+              if not re.fullmatch(r"[a-z0-9][a-z0-9-]*:(dev-gcp|prod-gcp|dev-fss|prod-fss)", value):
                   raise SystemExit(f"Invalid target: {value!r}")
               app, cluster = value.split(":")
               if not Path(f".nais/{app}/{cluster}.yaml").is_file():
